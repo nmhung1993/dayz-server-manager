@@ -32,7 +32,6 @@ export class ServerCfg {
      */
     public motdInterval: number = 1;
 
-
     // Security
 
     /**
@@ -444,6 +443,9 @@ export type DiscordChannelType =
     ;
 
 export class Config {
+
+    public discordRoleID: string = '';
+    public discordAdminID: string = '';
 
     /**
      * The instance name of this server

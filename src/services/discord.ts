@@ -63,7 +63,9 @@ export class DiscordBot extends IStatefulService {
         client.on('error', (e) => this.log.log(LogLevel.ERROR, 'error', e));
 
         try {
+            this.log.log(LogLevel.IMPORTANT, 'Starting login discord bot');
             await client.login(this.manager.config.discordBotToken);
+            //this.log.log(LogLevel.IMPORTANT, `${client.login}`);
             this.client = client;
             this.sendQueuedMessage();
         } catch (e) {

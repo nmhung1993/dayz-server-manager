@@ -47,7 +47,7 @@ export class DiscordEventConverter extends IService {
                 InternalEventTypes.DISCORD_MESSAGE,
                 {
                     type: 'admin',
-                    message: 'Failed to update server!',
+                    message: 'Update server thất bại!!!',
                 },
             );
         } else {
@@ -55,7 +55,7 @@ export class DiscordEventConverter extends IService {
                 InternalEventTypes.DISCORD_MESSAGE,
                 {
                     type: 'notification',
-                    message: 'Successfully updated server!',
+                    message: 'Server đã Update thành công!',
                 },
             );
         }
@@ -67,7 +67,7 @@ export class DiscordEventConverter extends IService {
                 InternalEventTypes.DISCORD_MESSAGE,
                 {
                     type: 'admin',
-                    message: `Failed to update mods: ${status.modIds.join('\n')}`,
+                    message: `Có lỗi khi update mods: ${status.modIds.join('\n')}`,
                 },
             );
             return;
@@ -100,23 +100,23 @@ export class DiscordEventConverter extends IService {
                             }
                             const embed = new RichEmbed({
                                 color: 0x0099FF,
-                                title: `Successfully updated: ${modInfo.title}`,
+                                title: `Update mod: ${modInfo.title}`,
                                 url: `https://steamcommunity.com/sharedfiles/filedetails/?id=${modInfo.publishedfileid}`,
                                 fields,
                                 thumbnail: { url: modInfo.preview_url || undefined },
                                 image: { url: modInfo.preview_url || undefined },
                                 footer: {
-                                    text: 'Powered by DayZ Server Manager',
+                                    text: 'Chiến thôi bạn êi!',
                                 },
                             });
                             return embed;
                         } else if (typeof modInfo === 'string') {
                             return new RichEmbed({
                                 color: 0x0099FF,
-                                title: `Successfully updated: ${modInfo}`,
+                                title: `Update mod: ${modInfo}`,
                                 url: `https://steamcommunity.com/sharedfiles/filedetails/?id=${modInfo}`,
                                 footer: {
-                                    text: 'Powered by DayZ Server Manager',
+                                    text: 'Chiến thôi bạn êi!',
                                 },
                             });
                         }
@@ -127,15 +127,12 @@ export class DiscordEventConverter extends IService {
         );
     }
 
+
     private async handleServerState(newState: ServerState, previousState: ServerState): Promise<void> {
         // msg about server startup
-        if (
-            newState === ServerState.STARTED
-            && (
-                previousState === ServerState.STARTING
-            )
-        ) {
-            const message = 'Server started sucessfully';
+        //if ((newState === ServerState.STARTED)&&(previousState === ServerState.STARTING)) {
+        if (newState === ServerState.STARTED) {
+            const message = `Server đã khởi động! <@&>`;
             this.log.log(LogLevel.IMPORTANT, message);
             this.eventBus.emit(
                 InternalEventTypes.DISCORD_MESSAGE,
@@ -147,18 +144,14 @@ export class DiscordEventConverter extends IService {
         }
 
         // msg about server stop
-        if (
-            newState === ServerState.STOPPED
-            && (
-                previousState === ServerState.STOPPING
-            )
-        ) {
-            const message = 'Server stopped sucessfully';
+        //if ((newState === ServerState.STOPPED)&&(previousState === ServerState.STOPPING)) {
+        if (newState === ServerState.STOPPED) {
+            const message = 'Đã dừng server. Yupp!';
             this.log.log(LogLevel.IMPORTANT, message);
             this.eventBus.emit(
                 InternalEventTypes.DISCORD_MESSAGE,
                 {
-                    type: 'notification',
+                    type: 'admin',
                     message,
                 },
             );
@@ -172,12 +165,12 @@ export class DiscordEventConverter extends IService {
                 || previousState === ServerState.STARTED
             )
         ) {
-            const message = 'Detected possible server crash. Restarting...';
+            const message = 'Có gì đó không ổn rồi man <@208994915919724544>. Đang khởi động lại server...';
             this.log.log(LogLevel.WARN, message);
             this.eventBus.emit(
                 InternalEventTypes.DISCORD_MESSAGE,
                 {
-                    type: 'notification',
+                    type: 'admin',
                     message,
                 },
             );

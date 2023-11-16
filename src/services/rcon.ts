@@ -159,13 +159,15 @@ export class RCON extends IStatefulService {
             }
 
             this.log.log(LogLevel.DEBUG, `message`, message);
-            this.eventBus.emit(
-                InternalEventTypes.DISCORD_MESSAGE,
-                {
-                    type: 'rcon',
-                    message,
-                },
-            );
+            if(!message.includes('discord.gg')){
+                this.eventBus.emit(
+                    InternalEventTypes.DISCORD_MESSAGE,
+                    {
+                        type: 'rcon',
+                        message,
+                    },
+                );
+            }
         });
 
         this.connection.on('command', (data, resolved, packet) => {
@@ -216,7 +218,7 @@ export class RCON extends IStatefulService {
             if (!this.connected) {
                 this.connected = true;
                 this.log.log(LogLevel.IMPORTANT, 'connected');
-                void this.sendCommand('say -1 Big Brother Connected.');
+                void this.sendCommand('say -1 SWT admin CONNECTED.');
             }
         });
     }
@@ -435,7 +437,9 @@ export class RCON extends IStatefulService {
     }
 
     public async global(message: string): Promise<void> {
-        await this.sendCommand(`say -1 ${message}`);
+        const cmdMessage = `say -1 ${message}`
+        this.log.log(LogLevel.WARN, `RCON command: ${cmdMessage}`);
+        await this.sendCommand(cmdMessage);
     }
 
     public async lock(): Promise<void> {

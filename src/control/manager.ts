@@ -88,6 +88,14 @@ export class Manager {
         return levels.includes(userLevel) && levels.indexOf(userLevel) <= levels.indexOf(level);
     }
 
+    public getDiscordRoleID(): string {
+        return this.config.discordRoleID;
+    }
+
+    public getDiscordAdminID(): string {
+        return this.config.discordAdminID;
+    }
+
     public getWebPort(): number {
         if ((this.config.webPort ?? 0) > 0) {
             return this.config.webPort;

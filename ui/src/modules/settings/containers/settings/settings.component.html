@@ -16,21 +16,45 @@
                 <div class="row spaced">
                     <div class="col-md-12">
                         <div class="form-group">
+                            <label for="name">Discord Admin ID</label>
+                            <pre class="small text-muted">
+                                {{ 'User id của loz admin, cho mỗi lần lỗi bot nó noti :))' }}
+                            </pre>
+                            <input type="text" class="form-control" id="discordAdminID" required
+                                [(ngModel)]="config.discordAdminID" name="discordAdminID" #discordAdminID="ngModel">
+                            <div [hidden]="discordAdminID.valid || discordAdminID.pristine" class="alert alert-danger">
+                                Paste userId của thằng loz admin để bot noiti nó khi detect lỗi.
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="name">Discord Role ID</label>
+                            <pre class="small text-muted">
+                                {{ 'Role id của mấy khứa pick role noti DayZ' }}
+                            </pre>
+                            <input type="text" class="form-control" id="discordRoleID" required
+                                [(ngModel)]="config.discordRoleID" name="discordRoleID" #discordRoleID="ngModel">
+                            <div [hidden]="discordRoleID.valid || discordRoleID.pristine" class="alert alert-danger">
+                                Paste roleID của role DayZ để noti khi server chạy.
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
                             <label for="name">Instance ID</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.instanceId.description }}
+                                {{ 'Tên instance(folder name) của server' }}
                             </pre>
                             <input type="text" class="form-control" id="instanceId" required
                                 [(ngModel)]="config.instanceId" name="instanceId" #instanceId="ngModel">
                             <div [hidden]="instanceId.valid || instanceId.pristine" class="alert alert-danger">
-                                Instance ID is required
+                                Instance ID không được để trống
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label for="logLevel">Log Level</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.loglevel.description }}
+                                {{ 'Set logLevel cho dễ theo dõi/debug' }}
                             </pre>
                             <select class="form-control" id="logLevel"
                                     [(ngModel)]="config.loglevel" name="logLevel"
@@ -49,7 +73,7 @@
                 <hr>
                 <div class="row spaced">
                     <div class="col-md-12">
-                        --- currently only in file ---
+                        --- Không cho sửa trên WEB ---
                     </div>
                 </div>
 
@@ -57,7 +81,7 @@
                 <hr>
                 <div class="row spaced">
                     <div class="col-md-12">
-                        --- currently only in file ---
+                        --- Không cho sửa trên WEB ---
                     </div>
                 </div>
 
@@ -68,7 +92,7 @@
                         <div class="form-group">
                             <label for="discordBotToken">Discord Bot Token</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.discordBotToken.description }}
+                                {{ 'Token của bot discord. Để trống để tắt discord bot!' }}
                             </pre>
                             <input type="text" class="form-control" id="discordBotToken" [(ngModel)]="config.discordBotToken"
                                 name="discordBotToken">
@@ -78,7 +102,7 @@
                         <div class="form-group">
                             <label>Discord Channels</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.discordChannels.description }}
+                                {{ "Kênh mà con bot sẽ hoạt động, nchung đừng chỉnh sửa linh tinh nếu không rõ.\n\nCó 3 loại kênh chính:\n'admin' - kênh này sẽ nhận lệnh của admin\n'rcon' - kênh này sẽ ghi lại log của RCON\n'notification' - kênh này sẽ noti cho người chơi khi server restart, update, etc...\n" }}
                             </pre>
                             <div class="row" *ngFor="let chan of getDiscordChannels(); let idx = index">
                                 <div class="col-md-6">
@@ -90,7 +114,7 @@
                                 </div>
                                 <div class="col-md-1">
                                     <button class="btn btn-danger form-control" type="button" (click)="config.discordChannels.splice(idx, 1)">
-                                        <fa-icon class="mr-1" [icon]='["fas", "trash"]'></fa-icon>Delete Channel
+                                        <fa-icon class="mr-1" [icon]='["fas", "trash"]'></fa-icon>Xoá Channel
                                     </button>
                                 </div>
                                 <div class="col-md-4">
@@ -104,18 +128,18 @@
                                             <option [ngValue]="'notification'">Notification</option>
                                         </select>
                                         <button class="btn btn-danger form-control" type="button" (click)="chan.mode.splice(modeidx, 1)">
-                                            <fa-icon class="mr-1" [icon]='["fas", "trash"]'></fa-icon>Delete Mode
+                                            <fa-icon class="mr-1" [icon]='["fas", "trash"]'></fa-icon>Xoá Mode
                                         </button>
                                     </div>
                                     <button type="button" class="btn form-control" (click)="chan.mode.push('admin')">
-                                        <fa-icon class="mr-1" [icon]='["fas", "plus-circle"]'></fa-icon>Add Mode
+                                        <fa-icon class="mr-1" [icon]='["fas", "plus-circle"]'></fa-icon>Thêm Mode
                                     </button>
                                 </div>
 
                             </div>
                         </div>
                         <button type="button" class="btn form-control" (click)="config.discordChannels.push({channel: '', mode: 'admin'})">
-                            <fa-icon class="mr-1" [icon]='["fas", "plus-circle"]'></fa-icon>Add Channel
+                            <fa-icon class="mr-1" [icon]='["fas", "plus-circle"]'></fa-icon>Thêm Channel
                         </button>
                     </div>
                 </div>
@@ -127,7 +151,7 @@
                         <div class="form-group">
                             <label for="rconPassword">RCon Password</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.rconPassword.description }}
+                                {{ 'RCon Credentials. Để trống thì bot tự generate.' }}
                             </pre>
                             <input type="text" class="form-control" id="rconPassword" [(ngModel)]="config.rconPassword"
                                 name="rconPassword">
@@ -137,7 +161,7 @@
                         <div class="form-group">
                             <label for="serverPath">Server Path</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.serverPath.description }}
+                                {{ 'Đường dẫn tới folder của Server' }}
                             </pre>
                             <input type="text" class="form-control" id="serverPath" [(ngModel)]="config.serverPath"
                                 name="serverPath">
@@ -147,7 +171,7 @@
                         <div class="form-group">
                             <label for="serverPort">Server Port</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.serverPort.description }}
+                                {{ 'Server game port' }}
                             </pre>
                             <input type="number" class="form-control" id="serverPort" [(ngModel)]="config.serverPort"
                                 name="serverPort">
@@ -157,7 +181,7 @@
                         <div class="form-group">
                             <label for="serverExe">Server EXE</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.serverExe.description }}
+                                {{ 'Tên file exe mà server sẽ chạy' }}
                             </pre>
                             <input type="text" class="form-control" id="serverExe" [(ngModel)]="config.serverExe"
                                 name="serverExe">
@@ -169,7 +193,7 @@
                             name="experimentalServer">
                             <label class="form-check-label" for="experimentalServer">Experimental Server</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.experimentalServer.description }}
+                                {{ 'Tick để enable server exp' }}
                             </pre>
                         </div>
                     </div>
@@ -177,7 +201,7 @@
                         <div class="form-group">
                             <label for="battleyePath">BattlEye Path</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.battleyePath.description }}
+                                {{ 'Đường dẫn tới folder BattlEye' }}
                             </pre>
                             <input type="text" class="form-control" id="battleyePath" [(ngModel)]="config.battleyePath"
                                 name="battleyePath">
@@ -187,7 +211,7 @@
                         <div class="form-group">
                             <label for="profilesPath">Profiles Path</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.profilesPath.description }}
+                                {{ 'Đường dẫn tới folder profiles' }}
                             </pre>
                             <input type="text" class="form-control" id="profilesPath" [(ngModel)]="config.profilesPath"
                                 name="profilesPath">
@@ -197,7 +221,7 @@
                         <div class="form-group">
                             <label for="serverCfgPath">ServerCfg Path</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.serverCfgPath.description }}
+                                {{ 'Đường dẫn tới folder serverCfg' }}
                             </pre>
                             <input type="text" class="form-control" id="serverCfgPath" [(ngModel)]="config.serverCfgPath"
                                 name="serverCfgPath">
@@ -212,7 +236,7 @@
                         <div class="form-group">
                             <label>Steam WS Mods (Mod IDs)</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.steamWsMods.description }}
+                                {{ 'List modId mà con bot sẽ tự download/update' }}
                             </pre>
                             <div class="row" style="margin-bottom: 15px;" *ngFor="let mod of config.steamWsMods; let idx = index">
                                 <div class="col-md-11" *ngIf="config.steamWsMods[idx]['includes']">
@@ -255,7 +279,7 @@
                         <div class="form-group">
                             <label>Local Mods (Paths)</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.localMods.description }}
+                                {{ '' }}
                             </pre>
                             <div class="row" *ngFor="let mod of config.localMods; let idx = index">
                                 <div class="col-md-11">
@@ -280,7 +304,7 @@
                         <div class="form-group">
                             <label>Server Mods (Paths)</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.serverMods.description }}
+                                {{ '' }}
                             </pre>
                             <div class="row" *ngFor="let mod of config.serverMods; let idx = index">
                                 <div class="col-md-11">
@@ -378,7 +402,7 @@
                         <div class="form-group">
                             <label for="backupPath">Backup Path</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.backupPath.description }}
+                                {{ '' }}
                             </pre>
                             <input type="text" class="form-control" id="backupPath"
                                 [(ngModel)]="config.backupPath" name="backupPath">
@@ -388,7 +412,7 @@
                         <div class="form-group">
                             <label for="backupMaxAge">Max Backup Age in Days</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.backupMaxAge.description }}
+                                {{ '' }}
                             </pre>
                             <input type="number" class="form-control" id="backupMaxAge" [(ngModel)]="config.backupMaxAge"
                             name="backupMaxAge">
@@ -403,7 +427,7 @@
                         <div class="form-group">
                             <label for="steamUsername">Steam User</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.steamUsername.description }}
+                                {{ '' }}
                             </pre>
                             <input type="text" class="form-control" id="steamUsername"
                                 [(ngModel)]="config.steamUsername" name="steamUsername" required>
@@ -413,7 +437,7 @@
                         <div class="form-group">
                             <label for="steamPassword">Steam Password</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.steamPassword.description }}
+                                {{ '' }}
                             </pre>
                             <input type="text" class="form-control" id="steamPassword"
                                 [(ngModel)]="config.steamPassword" name="steamPassword">
@@ -433,7 +457,7 @@
                         <div class="form-group">
                             <label for="steamWorkshopPath">Steam WS Path</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.steamWorkshopPath.description }}
+                                {{ '' }}
                             </pre>
                             <input type="text" class="form-control" id="steamWorkshopPath"
                                 [(ngModel)]="config.steamWorkshopPath" name="steamWorkshopPath">
@@ -443,7 +467,7 @@
                         <div class="form-group">
                             <label for="steamMetaPath">Steam Meta Path</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.steamMetaPath.description }}
+                                {{ '' }}
                             </pre>
                             <input type="text" class="form-control" id="steamMetaPath"
                                 [(ngModel)]="config.steamMetaPath" name="steamMetaPath">
@@ -511,7 +535,7 @@
                         <div class="form-group">
                             <label for="updateModsMaxBatchSize">Mod Update Batch Size</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.updateModsMaxBatchSize.description }}
+                                {{ '' }}
                             </pre>
                             <input type="number" class="form-control" id="updateModsMaxBatchSize"
                                 [(ngModel)]="config.updateModsMaxBatchSize" name="updateModsMaxBatchSize">
@@ -521,7 +545,7 @@
                         <div class="form-group">
                             <label for="updateModsMaxBatchFileSize">Mod Update Max Batch Filesize</label>
                             <pre class="small text-muted">
-                                {{ schema.properties.updateModsMaxBatchFileSize.description }}
+                                {{ '' }}
                             </pre>
                             <input type="number" class="form-control" id="updateModsMaxBatchFileSize"
                                 [(ngModel)]="config.updateModsMaxBatchFileSize" name="updateModsMaxBatchFileSize">
@@ -534,7 +558,7 @@
                 <hr>
                 <div class="row spaced">
                     <div class="col-md-12">
-                        --- currently only in file ---
+                        --- Không cho sửa trên WEB ---
                     </div>
                 </div>
 
@@ -542,7 +566,7 @@
                 <hr>
                 <div class="row spaced">
                     <div class="col-md-12">
-                        --- currently only in file ---
+                        --- Không cho sửa trên WEB ---
                     </div>
                 </div>
 
@@ -550,7 +574,7 @@
                 <hr>
                 <div class="row spaced">
                     <div class="col-md-12">
-                        --- currently only in file ---
+                        --- Không cho sửa trên WEB ---
                     </div>
                 </div>
 

@@ -38,7 +38,7 @@ export class Logger {
 
             // sync to the last write
             this.lastWrite = this.lastWrite
-                .then(/* istanbul ignore next */ () => {
+                .then(/* istanbul ignore next */() => {
                     return fs.promises.appendFile(
                         Logger.defaultLogFile,
                         `${msg} - ${JSON.stringify(data)}\n`,
@@ -73,7 +73,7 @@ export class Logger {
 
     public constructor(
         private context: string,
-    ) {}
+    ) { }
 
     private formatContext(context: string): string {
         if (context.length >= this.MAX_CONTEXT_LENGTH) {
@@ -90,9 +90,9 @@ export class Logger {
 
         const allowedLevel = Logger.LOG_LEVELS[this.context] ?? Logger.defaultLogLevel;
         if (level >= allowedLevel) {
-            const date = false
-                ? new Date().toLocaleString()
-                : new Date().toISOString();
+            const date = new Date().toLocaleString('VN', { timeZone: 'Asia/ho_chi_minh' });
+                //? new Date().toLocaleString('VN', { timeZone: 'Asia/ho_chi_minh' })
+                //: new Date().toISOString();
             const fmt = `@${date} | ${LogLevelNames[level]} | ${this.formatContext(this.context)} | ${msg}`;
 
             Logger.LogLevelFncs[level](fmt, data);

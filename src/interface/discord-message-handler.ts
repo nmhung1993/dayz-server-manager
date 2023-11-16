@@ -31,7 +31,7 @@ export class DiscordMessageHandler extends IService {
 
     public async handleCommandMessage(message: Message): Promise<void> {
         if (!this.manager.initDone) {
-            this.log.log(LogLevel.DEBUG, `Received command before init was completed`);
+            this.log.log(LogLevel.DEBUG, `Server chưa khởi tạo xong, không thể gọi lệnh!`);
             return;
         }
 
@@ -47,32 +47,33 @@ export class DiscordMessageHandler extends IService {
 
         if (!authorId?.includes('#')) {
             // safety
-            this.log.log(LogLevel.DEBUG, `Received command without valid author id`);
+            this.log.log(LogLevel.DEBUG, `Bạn không có quyền gọi lệnh này!`);
             return;
         }
 
-        this.log.log(LogLevel.INFO, `Command "${command}" from "${authorId}" in "${channelName}" with args: "${args?.join(' ')}"`);
+        const argsMessage = args?.join(' ');
+        this.log.log(LogLevel.INFO, `Command "${command}" from "${authorId}" in "${channelName}" with args: "${argsMessage}"`);
 
         const configChannel = this.manager.config.discordChannels.find((x) => x.channel.toLowerCase() === channelName?.toLowerCase());
-        if (command === 'help') {
-            let response = 'The following commands are available: \n\n';
+        if (command === 'help' && (configChannel.mode === 'admin')) {
+            let response = 'List lệnh cho discord admin: \n\n';
             response += [...this.eventInterface.commandMap.entries()]
                 .filter((x) => !x[1].disableDiscord)
                 .map((x) => this.formatCommandUsage(...x))
-                .join('\n\n');
-            response += '\n\n ([x] means x is optional, <x> means x is required)';
+                .join('\n');
+            response += '\n\n (Trong <> là bắt buộc phải có, [] thì tuỳ.)';
             await message.reply(response);
             return;
         }
 
         const handler = this.eventInterface.commandMap?.get(command);
         if (!handler || handler.disableDiscord) {
-            await message.reply('Command not found.');
+            await message.reply('Sai cú pháp.');
             return;
         }
 
         if (configChannel?.mode !== 'admin' && !handler.discordPublic) {
-            await message.reply('This command is not allowed in this channel.');
+            await message.reply('Dùng cho đúng chanel bạn êi!');
             return;
         }
 
@@ -87,14 +88,17 @@ export class DiscordMessageHandler extends IService {
         const templateParams = (handler.params || []);
         for (let i = 0; i < templateParams.length; i++) {
             if (i >= args.length) {
-                await message.reply(`Wrong param count. Usage: ${this.formatCommandUsage(command, handler)}`);
+                await message.reply(`Sai cú pháp. Usage: ${this.formatCommandUsage(command, handler)}`);
                 return;
             }
             try {
                 const val = templateParams[i].parse ? templateParams[i].parse(args[i]) : args[i];
                 req[templateParams[i].location || 'body'][templateParams[i].name] = val;
+                if(command === 'global') {
+                    req[templateParams[i].location || 'body'][templateParams[i].name] = argsMessage;
+                }
             } catch {
-                await message.reply(`Could not parse param: '${templateParams[i].name}'. Usage: ${this.formatCommandUsage(command, handler)}`);
+                await message.reply(`Lỗi gọi cú pháp: '${templateParams[i].name}'. Usage: ${this.formatCommandUsage(command, handler)}`);
                 return;
             }
         }
