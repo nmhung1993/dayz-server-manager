@@ -151,9 +151,7 @@ describe('Test class Discord', () => {
             },{
                 mode: 'admin',
                 channel: 'channel2',
-            }],
-            discordRoleID: '12345',
-            discordAdminID: '54321'
+            }]
         } as any;
 
         const discord = injector.resolve(DiscordBot);
