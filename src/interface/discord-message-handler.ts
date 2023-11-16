@@ -11,7 +11,7 @@ import { Interface } from './interface';
 @injectable()
 export class DiscordMessageHandler extends IService {
 
-    public readonly PREFIX = '!';
+    public readonly PREFIX = '!dz.';
 
     public constructor(
         loggerFactory: LoggerFactory,
