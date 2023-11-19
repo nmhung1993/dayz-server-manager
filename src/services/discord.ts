@@ -121,7 +121,8 @@ export class DiscordBot extends IStatefulService {
 
         const channels = this.manager.config.discordChannels
             ?.filter((x) => isDiscordChannelType(x.mode, message.type));
-        const matching = this.client?.guilds?.first()?.channels
+        //const matching = channels
+        const matching = this.client?.guilds?.cache.first()?.channels.cache
             ?.filter((channel) => {
                 return channels?.some((x) => x.channel === channel.name?.toLowerCase()) ?? false;
             }).array() || [];
@@ -132,7 +133,7 @@ export class DiscordBot extends IStatefulService {
                 }
                 if (message.embeds?.length) {
                     for (const embed of message.embeds) {
-                        await (x as TextChannel).sendEmbed(embed);
+                        await (x as TextChannel).send(embed);
                     }
                 }
             } catch (e) {

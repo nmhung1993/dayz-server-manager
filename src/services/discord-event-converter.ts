@@ -8,7 +8,7 @@ import { Manager } from "../control/manager";
 import { EventBus } from "../control/event-bus";
 import { InternalEventTypes } from "../types/events";
 import { SteamMetaData } from "./steamcmd";
-import { RichEmbed } from "discord.js";
+import { MessageEmbed } from "discord.js";
 import { GameUpdatedStatus, ModUpdatedStatus } from "../types/steamcmd";
 import { ServerState } from "../types/monitor";
 import { LogLevel } from "../util/logger";
@@ -98,7 +98,7 @@ export class DiscordEventConverter extends IService {
                                     inline: true,
                                 });
                             }
-                            const embed = new RichEmbed({
+                            const embed = new MessageEmbed({
                                 color: 0x0099FF,
                                 title: `Update mod: ${modInfo.title}`,
                                 url: `https://steamcommunity.com/sharedfiles/filedetails/?id=${modInfo.publishedfileid}`,
@@ -111,7 +111,7 @@ export class DiscordEventConverter extends IService {
                             });
                             return embed;
                         } else if (typeof modInfo === 'string') {
-                            return new RichEmbed({
+                            return new MessageEmbed({
                                 color: 0x0099FF,
                                 title: `Update mod: ${modInfo}`,
                                 url: `https://steamcommunity.com/sharedfiles/filedetails/?id=${modInfo}`,
