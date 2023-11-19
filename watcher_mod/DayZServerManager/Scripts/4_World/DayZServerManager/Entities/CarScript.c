@@ -2,11 +2,13 @@ modded class CarScript
 {
 	void CarScript()
 	{
-		DayZServerManagerContainer.registerVehicle(this);
+		if(this != NULL)
+			DayZServerManagerContainer.registerVehicle(this);
 	}
 
     void ~CarScript()
 	{
-		DayZServerManagerContainer.unregisterVehicle(this);
+		if(this != NULL)
+			DayZServerManagerContainer.unregisterVehicle(this);
     }
 }

@@ -10,6 +10,7 @@ import { EventBus } from '../control/event-bus';
 import { InternalEventTypes } from '../types/events';
 import { ServerStarter } from './server-starter';
 import { ServerDetector } from './server-detector';
+import { SteamCMD } from '../services/steamcmd';
 
 export type ServerStateListener = (state: ServerState) => any;
 
@@ -21,6 +22,7 @@ export class Monitor extends IStatefulService {
     private tickRunning = false;
     private lastTick = 0;
 
+    public isNewModUpdated = false;
     public restartLock: boolean = false;
     private initialStart: boolean = true;
     private isStartedMsgSent = false;
@@ -40,6 +42,7 @@ export class Monitor extends IStatefulService {
         private processes: Processes,
         private serverStarter: ServerStarter,
         private serverDetector: ServerDetector,
+        private steamCmd: SteamCMD,
         @inject(InjectionTokens.fs) private fs: FSAPI,
     ) {
         super(loggerFactory.createLogger('Monitor'));
@@ -181,21 +184,39 @@ export class Monitor extends IStatefulService {
                 this.isStartedMsgSent = false;
             }
 
-            if (needsRestart) {
-                this.log.log(LogLevel.IMPORTANT, 'Server not found. Starting...');
-                this.internalServerState = ServerState.STARTING;
-                await this.serverStarter.startServer(this.initialStart);
-                this.lastServerUsages = [];
-                this.initialStart = false;
+            if (!await this.steamCmd.checkMods()) {
+                if (!await this.steamCmd.updateAllMods()) {
+                    throw new Error('Updating Mods failed');
+                }   
+            }
+            // if (!await this.steamCmd.checkMods()) {
+            //     throw new Error('Mod installation failed');
+            // }
 
-                // give the server a minute to start up
-                this.skipLoop(60000);
+            if (needsRestart) {
+                this.restartServer();
+            } else if (this.steamCmd.isNewModUpdated){
+                this.log.log(LogLevel.IMPORTANT, `[Monitor.restartServer] isNewModUpdated = ${this.steamCmd.isNewModUpdated}`);
+                this.restartServer();
             } else if (!this.manager.config.disableStuckCheck) {
                 await this.checkPossibleStuckState();
-            }
+            } 
         } catch (e) {
             this.log.log(LogLevel.ERROR, 'Error during server monitor loop', e);
         }
+    }
+
+    public async restartServer(){
+        this.log.log(LogLevel.IMPORTANT, '[Monitor.restartServer] Restarting...');
+        this.internalServerState = ServerState.STARTING;
+        await this.serverStarter.startServer(this.initialStart);
+        this.lastServerUsages = [];
+        this.initialStart = false;
+
+        // give the server a minute to start up
+        this.skipLoop(60000);
+
+        this.steamCmd.isNewModUpdated = false;
     }
 
     public async checkPossibleStuckState(): Promise<boolean> {

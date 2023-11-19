@@ -1,7 +1,7 @@
 class DZSMDumpEntry : Managed
 {
-	string classname;
-	string source;
+	string classNameTemp;
+	string sourceTemp;
 
 	ref TStringArray parents;
 
@@ -9,19 +9,19 @@ class DZSMDumpEntry : Managed
 		delete parents;
 	}
 
-	void Init(string classname, string source)
+	void Init(string classNameTemp, string sourceTemp)
 	{
-		this.classname = classname;
-		this.source = source;
+		this.classNameTemp = classNameTemp;
+		this.sourceTemp = sourceTemp;
 
 		parents = new TStringArray;
-		string child = classname;
+		string child = classNameTemp;
 		string parent;
-		while (GetGame().ConfigGetBaseName(source + " " + child, parent))
+		while (GetGame().ConfigGetBaseName(sourceTemp + " " + child, parent))
 		{
 			if (parent && child != parent)
 			{
-				parents.Insert(parent)
+				parents.Insert(parent);
 			}
 			else
 			{
@@ -58,31 +58,31 @@ class DZSMBaseDumpEntry : DZSMDumpEntry
 		delete itemInfo;
 	}
 
-	void Init(string classname, string source)
+	override void Init(string classNameTemp, string sourceTemp)
 	{
-		super.Init(classname, source);
+		super.Init(classNameTemp, sourceTemp);
 
-		displayName = GetGame().ConfigGetTextOut( source + " " + classname + " displayName" );
-		hitPoints = GetGame().ConfigGetFloat( source + " " + classname + " DamageSystem GlobalHealth Health hitpoints" );
+		displayName = GetGame().ConfigGetTextOut( sourceTemp + " " + classNameTemp + " displayName" );
+		hitPoints = GetGame().ConfigGetFloat( sourceTemp + " " + classNameTemp + " DamageSystem GlobalHealth Health hitpoints" );
 
-		weight = GetGame().ConfigGetFloat( source +" " + classname + " weight" );
+		weight = GetGame().ConfigGetFloat( sourceTemp +" " + classNameTemp + " weight" );
 		size = new TIntArray;
-		GetGame().ConfigGetIntArray( source + " " + classname + " itemSize", size );
+		GetGame().ConfigGetIntArray( sourceTemp + " " + classNameTemp + " itemSize", size );
 
 		repairableWithKits = new TIntArray;
-		GetGame().ConfigGetIntArray( source + " " + classname + " repairableWithKits", repairableWithKits );
+		GetGame().ConfigGetIntArray( sourceTemp + " " + classNameTemp + " repairableWithKits", repairableWithKits );
 		repairCosts = new TFloatArray;
-		GetGame().ConfigGetFloatArray( source + " " + classname + " repairCosts", repairCosts );
+		GetGame().ConfigGetFloatArray( sourceTemp + " " + classNameTemp + " repairCosts", repairCosts );
 
 		inventorySlot = new TStringArray;
-		GetGame().ConfigGetTextArray( source + " " + classname + " inventorySlot", inventorySlot );
+		GetGame().ConfigGetTextArray( sourceTemp + " " + classNameTemp + " inventorySlot", inventorySlot );
 		
-		lootCategory = GetGame().ConfigGetTextOut( source + " " + classname + " lootCategory" );
+		lootCategory = GetGame().ConfigGetTextOut( sourceTemp + " " + classNameTemp + " lootCategory" );
 		lootTag = new TStringArray;
-		GetGame().ConfigGetTextArray( source + " " + classname + " lootTag", lootTag );
+		GetGame().ConfigGetTextArray( sourceTemp + " " + classNameTemp + " lootTag", lootTag );
 
 		itemInfo = new TStringArray;
-		GetGame().ConfigGetTextArray( "cfgVehicles " + classname + " itemInfo", itemInfo);
+		GetGame().ConfigGetTextArray( "cfgVehicles " + classNameTemp + " itemInfo", itemInfo);
 	}
 }
 
@@ -120,12 +120,12 @@ class DZSMAmmoDumpEntry : DZSMDumpEntry
 	float damageArmor;
 
 
-	void DZSMAmmoDumpEntry(string classname)
+	void DZSMAmmoDumpEntry(string classNameTemp)
 	{
-		Init(classname, "cfgMagazines");
+		Init(classNameTemp, "cfgMagazines");
 
-		displayName = GetGame().ConfigGetTextOut( "cfgMagazines " + classname + " displayName" );
-		projectile = GetGame().ConfigGetTextOut( "cfgMagazines " + classname + " ammo" );
+		displayName = GetGame().ConfigGetTextOut( "cfgMagazines " + classNameTemp + " displayName" );
+		projectile = GetGame().ConfigGetTextOut( "cfgMagazines " + classNameTemp + " ammo" );
 		
 		simulation = GetGame().ConfigGetTextOut( "cfgAmmo " + projectile + " simulation" );
 
@@ -169,10 +169,10 @@ static void DZSMAmmoDump()
     int nClasses = GetGame().ConfigGetChildrenCount( "cfgMagazines" );
     for ( int nClass = 0; nClass < nClasses; ++nClass )
 	{
-    	string className;
-    	GetGame().ConfigGetChildName( "cfgMagazines", nClass, className );
-		if (GetGame().IsKindOf(className, "Ammunition_Base") && GetGame().ConfigGetInt( "cfgMagazines " + className + " scope" ) == 2) {
-			list.Insert(new DZSMAmmoDumpEntry(className));
+    	string classNameTemp;
+    	GetGame().ConfigGetChildName( "cfgMagazines", nClass, classNameTemp );
+		if (GetGame().IsKindOf(classNameTemp, "Ammunition_Base") && GetGame().ConfigGetInt( "cfgMagazines " + classNameTemp + " scope" ) == 2) {
+			list.Insert(new DZSMAmmoDumpEntry(classNameTemp));
 		}
     }
 	JsonFileLoader<array<ref DZSMAmmoDumpEntry>>.JsonSaveFile(filepath, list);
@@ -190,21 +190,21 @@ class DZSMMagDumpEntry : DZSMDumpEntry
 	ref TIntArray size;
 	ref TStringArray ammo;
 	
-	void DZSMMagDumpEntry(string classname)
+	void DZSMMagDumpEntry(string classNameTemp)
 	{
-		Init(classname, "cfgMagazines");
+		Init(classNameTemp, "cfgMagazines");
 
-		displayName = GetGame().ConfigGetTextOut( "cfgMagazines " + classname + " displayName" );
-		projectile = GetGame().ConfigGetTextOut( "cfgMagazines " + classname + " ammo" );
+		displayName = GetGame().ConfigGetTextOut( "cfgMagazines " + classNameTemp + " displayName" );
+		projectile = GetGame().ConfigGetTextOut( "cfgMagazines " + classNameTemp + " ammo" );
 
-		weight = GetGame().ConfigGetFloat( "cfgMagazines " + classname + " weight" );
-		weightPerQuantityUnit = GetGame().ConfigGetFloat( "cfgMagazines " + classname + " weightPerQuantityUnit" );
-		capacity = GetGame().ConfigGetFloat( "cfgMagazines " + classname + " count" );
+		weight = GetGame().ConfigGetFloat( "cfgMagazines " + classNameTemp + " weight" );
+		weightPerQuantityUnit = GetGame().ConfigGetFloat( "cfgMagazines " + classNameTemp + " weightPerQuantityUnit" );
+		capacity = GetGame().ConfigGetFloat( "cfgMagazines " + classNameTemp + " count" );
 		
 		size = new TIntArray;
-		GetGame().ConfigGetIntArray( "cfgMagazines " + classname + " itemSize", size);
+		GetGame().ConfigGetIntArray( "cfgMagazines " + classNameTemp + " itemSize", size);
 		ammo = new TStringArray;
-		GetGame().ConfigGetTextArray( "cfgMagazines " + classname + " ammoItems", ammo);
+		GetGame().ConfigGetTextArray( "cfgMagazines " + classNameTemp + " ammoItems", ammo);
 	}
 
 	void ~DZSMMagDumpEntry()
@@ -225,10 +225,10 @@ static void DZSMMagDump()
     int nClasses = GetGame().ConfigGetChildrenCount( "cfgMagazines" );
     for ( int nClass = 0; nClass < nClasses; ++nClass )
 	{
-    	string className;
-    	GetGame().ConfigGetChildName( "cfgMagazines", nClass, className );
-		if (GetGame().IsKindOf(className, "Magazine_Base") && GetGame().ConfigGetInt( "cfgMagazines " + className + " scope" ) == 2) {
-			list.Insert(new DZSMMagDumpEntry(className));
+    	string classNameTemp;
+    	GetGame().ConfigGetChildName( "cfgMagazines", nClass, classNameTemp );
+		if (GetGame().IsKindOf(classNameTemp, "Magazine_Base") && GetGame().ConfigGetInt( "cfgMagazines " + classNameTemp + " scope" ) == 2) {
+			list.Insert(new DZSMMagDumpEntry(classNameTemp));
 		}
     }
 	JsonFileLoader<array<ref DZSMMagDumpEntry>>.JsonSaveFile(filepath, list);
@@ -236,23 +236,23 @@ static void DZSMMagDump()
 
 class DZSMWeaponModeDumpEntry : Managed
 {
-	string name;
-	float rpm;
-	float dispersion;
-	float rounds;
+	string nameTemp;
+	float rpmTemp;
+	float dispersionTemp;
+	float roundsTemp;
 
-	void DZSMWeaponModeDumpEntry(string name, float rpm, float dispersion, float rounds)
+	void DZSMWeaponModeDumpEntry(string nameTemp, float rpmTemp, float dispersionTemp, float roundsTemp)
 	{
-		this.name = name;
-		this.rpm = rpm;
-		this.dispersion = dispersion;
-		if (rounds)
+		this.nameTemp = nameTemp;
+		this.rpmTemp = rpmTemp;
+		this.dispersionTemp = dispersionTemp;
+		if (roundsTemp)
 		{
-			this.rounds = rounds;
+			this.roundsTemp = roundsTemp;
 		}
 		else
 		{
-			this.rounds = 1;
+			this.roundsTemp = 1;
 		}
 	}
 }
@@ -302,62 +302,62 @@ class DZSMWeaponDumpEntry : DZSMBaseDumpEntry
 
 	ref array<ref DZSMWeaponModeDumpEntry> modes;
 	
-	void DZSMWeaponDumpEntry(string classname)
+	void DZSMWeaponDumpEntry(string classNameTemp)
 	{
-		Init(classname, "cfgWeapons");
+		Init(classNameTemp, "cfgWeapons");
 
-		noise = GetGame().ConfigGetFloat( "cfgWeapons " + classname + " NoiseShoot strength" );
-		magazineSwitchTime = GetGame().ConfigGetFloat( "cfgWeapons " + classname + " magazineSwitchTime" );
-		initSpeedMultiplier = GetGame().ConfigGetFloat( "cfgWeapons " + classname + " initSpeedMultiplier" );
+		noise = GetGame().ConfigGetFloat( "cfgWeapons " + classNameTemp + " NoiseShoot strength" );
+		magazineSwitchTime = GetGame().ConfigGetFloat( "cfgWeapons " + classNameTemp + " magazineSwitchTime" );
+		initSpeedMultiplier = GetGame().ConfigGetFloat( "cfgWeapons " + classNameTemp + " initSpeedMultiplier" );
 		
 		ammo = new TStringArray;
-		GetGame().ConfigGetTextArray( "cfgWeapons " + classname + " chamberableFrom", ammo);
+		GetGame().ConfigGetTextArray( "cfgWeapons " + classNameTemp + " chamberableFrom", ammo);
 		mags = new TStringArray;
-		GetGame().ConfigGetTextArray( "cfgWeapons " + classname + " magazines", mags);
+		GetGame().ConfigGetTextArray( "cfgWeapons " + classNameTemp + " magazines", mags);
 		attachments = new TStringArray;
-		GetGame().ConfigGetTextArray( "cfgWeapons " + classname + " attachments", attachments);
+		GetGame().ConfigGetTextArray( "cfgWeapons " + classNameTemp + " attachments", attachments);
 		
-		chamberSize = GetGame().ConfigGetInt( "cfgWeapons " + classname + " chamberSize" );
+		chamberSize = GetGame().ConfigGetInt( "cfgWeapons " + classNameTemp + " chamberSize" );
 		TStringArray muzzles = new TStringArray;
-		GetGame().ConfigGetTextArray( "cfgWeapons " + classname + " muzzles", muzzles);
+		GetGame().ConfigGetTextArray( "cfgWeapons " + classNameTemp + " muzzles", muzzles);
 		barrels = muzzles.Count();
 		delete muzzles;
 		
-        color = GetGame().ConfigGetTextOut( "cfgWeapons " + classname + " color" );
+        color = GetGame().ConfigGetTextOut( "cfgWeapons " + classNameTemp + " color" );
 		
 		modes = new array<ref DZSMWeaponModeDumpEntry>;
 		
 		TStringArray modesList = new TStringArray;
-		GetGame().ConfigGetTextArray( "cfgWeapons " + classname + " modes", modesList);
+		GetGame().ConfigGetTextArray( "cfgWeapons " + classNameTemp + " modes", modesList);
 		for ( int i = 0; i < modesList.Count(); i++ )
 		{
-			float reloadTime = GetGame().ConfigGetFloat( "cfgWeapons " + classname + " " + modesList[i] + " reloadTime" );
+			float reloadTime = GetGame().ConfigGetFloat( "cfgWeapons " + classNameTemp + " " + modesList[i] + " reloadTime" );
 			if (reloadTime)
 			{
-				float rpm = 60.0 / reloadTime;
+				float rpmTemp = 60.0 / reloadTime;
 			}
-			float dispersion = GetGame().ConfigGetFloat( "cfgWeapons " + classname + " " + modesList[i] + " dispersion" );
-			float rounds = GetGame().ConfigGetFloat( "cfgWeapons " + classname + " " + modesList[i] + " burst" );
-			modes.Insert(new DZSMWeaponModeDumpEntry(modesList[i], rpm, dispersion, rounds));
+			float dispersionTemp = GetGame().ConfigGetFloat( "cfgWeapons " + classNameTemp + " " + modesList[i] + " dispersionTemp" );
+			float roundsTemp = GetGame().ConfigGetFloat( "cfgWeapons " + classNameTemp + " " + modesList[i] + " burst" );
+			modes.Insert(new DZSMWeaponModeDumpEntry(modesList[i], rpmTemp, dispersionTemp, roundsTemp));
 		}
 
 		recoilModifier = new TFloatArray;
-		GetGame().ConfigGetFloatArray( "cfgWeapons " + classname + " recoilModifier", recoilModifier);
+		GetGame().ConfigGetFloatArray( "cfgWeapons " + classNameTemp + " recoilModifier", recoilModifier);
 		swayModifier = new TFloatArray;
-		GetGame().ConfigGetFloatArray( "cfgWeapons " + classname + " swayModifier", swayModifier);
+		GetGame().ConfigGetFloatArray( "cfgWeapons " + classNameTemp + " swayModifier", swayModifier);
 
-        if (GetGame().ConfigIsExisting( "cfgWeapons " + classname + " OpticsInfo distanceZoomMin" ))
+        if (GetGame().ConfigIsExisting( "cfgWeapons " + classNameTemp + " OpticsInfo distanceZoomMin" ))
 		{
-			opticsDistanceZoomMin = GetGame().ConfigGetFloat( "cfgWeapons " + classname + " OpticsInfo distanceZoomMin" );
-			opticsDistanceZoomMax = GetGame().ConfigGetFloat( "cfgWeapons " + classname + " OpticsInfo distanceZoomMax" );
+			opticsDistanceZoomMin = GetGame().ConfigGetFloat( "cfgWeapons " + classNameTemp + " OpticsInfo distanceZoomMin" );
+			opticsDistanceZoomMax = GetGame().ConfigGetFloat( "cfgWeapons " + classNameTemp + " OpticsInfo distanceZoomMax" );
 			opticsDiscreteDistance = new TFloatArray;
-			GetGame().ConfigGetFloatArray( "cfgWeapons " + classname + " OpticsInfo discreteDistance", opticsDiscreteDistance );
+			GetGame().ConfigGetFloatArray( "cfgWeapons " + classNameTemp + " OpticsInfo discreteDistance", opticsDiscreteDistance );
 		}
 
-		if (!CheckItemCrash(classname))
+		if (!CheckItemCrash(classNameTemp))
 		{
 			Weapon_Base ent;
-			if ( !Class.CastTo( ent, GetGame().CreateObjectEx( classname, "0 0 0", ECE_CREATEPHYSICS ) ) )
+			if ( !Class.CastTo( ent, GetGame().CreateObjectEx( classNameTemp, "0 0 0", ECE_CREATEPHYSICS ) ) )
 				return;
 			
 			RecoilBase recoil = ent.SpawnRecoilObject();
@@ -395,11 +395,11 @@ class DZSMWeaponDumpEntry : DZSMBaseDumpEntry
 		}
 	}
 
-	private bool CheckItemCrash( string name )
+	private bool CheckItemCrash( string nameTemp )
 	{
 		for (int i = 0; i < m_ItemsThatCrash.Count(); i++)
 		{
-			if ( m_ItemsThatCrash[i] == name )
+			if ( m_ItemsThatCrash[i] == nameTemp )
 			{
 				return true;
 			}
@@ -419,10 +419,10 @@ static void DZSMWeaponDump()
     int nClasses = GetGame().ConfigGetChildrenCount( "cfgWeapons" );
     for ( int nClass = 0; nClass < nClasses; ++nClass )
 	{
-    	string className;
-    	GetGame().ConfigGetChildName( "cfgWeapons", nClass, className );
-		if (GetGame().IsKindOf(className, "Weapon_Base") && GetGame().ConfigGetInt( "cfgWeapons " + className + " scope" ) == 2) {
-			list.Insert(new DZSMWeaponDumpEntry(className));
+    	string classNameTemp;
+    	GetGame().ConfigGetChildName( "cfgWeapons", nClass, classNameTemp );
+		if (GetGame().IsKindOf(classNameTemp, "Weapon_Base") && GetGame().ConfigGetInt( "cfgWeapons " + classNameTemp + " scope" ) == 2) {
+			list.Insert(new DZSMWeaponDumpEntry(classNameTemp));
 		}
     }
 	JsonFileLoader<array<ref DZSMWeaponDumpEntry>>.JsonSaveFile(filepath, list);
@@ -455,36 +455,36 @@ class DZSMClothingDumpEntry : DZSMBaseDumpEntry
 	
 	ref TStringArray attachments;
 	
-	void DZSMClothingDumpEntry(string classname)
+	void DZSMClothingDumpEntry(string classNameTemp)
 	{
-		Init(classname, "cfgVehicles");
+		Init(classNameTemp, "cfgVehicles");
 
-		heatIsolation = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " heatIsolation" );
-		visibilityModifier = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " visibilityModifier" );
-		quickBarBonus = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " quickBarBonus" );
-		durability = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " durability" );
+		heatIsolation = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " heatIsolation" );
+		visibilityModifier = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " visibilityModifier" );
+		quickBarBonus = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " quickBarBonus" );
+		durability = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " durability" );
 	
-		armorProjectileHP = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " DamageSystem GlobalArmor Projectile Health damage" );
-		armorProjectileBlood = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " DamageSystem GlobalArmor Projectile Blood damage" );
-		armorProjectileShock = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " DamageSystem GlobalArmor Projectile Shock damage" );
+		armorProjectileHP = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " DamageSystem GlobalArmor Projectile Health damage" );
+		armorProjectileBlood = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " DamageSystem GlobalArmor Projectile Blood damage" );
+		armorProjectileShock = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " DamageSystem GlobalArmor Projectile Shock damage" );
 	
-		armorMeleeHP = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " DamageSystem GlobalArmor Melee Health damage" );
-		armorMeleeBlood = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " DamageSystem GlobalArmor Melee Blood damage" );
-		armorMeleeShock = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " DamageSystem GlobalArmor Melee Shock damage" );
+		armorMeleeHP = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " DamageSystem GlobalArmor Melee Health damage" );
+		armorMeleeBlood = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " DamageSystem GlobalArmor Melee Blood damage" );
+		armorMeleeShock = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " DamageSystem GlobalArmor Melee Shock damage" );
 	
-		armorFragHP = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " DamageSystem GlobalArmor FragGrenade Health damage" );
-		armorFragBlood = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " DamageSystem GlobalArmor FragGrenade Blood damage" );
-		armorFragShock = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " DamageSystem GlobalArmor FragGrenade Shock damage" );
+		armorFragHP = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " DamageSystem GlobalArmor FragGrenade Health damage" );
+		armorFragBlood = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " DamageSystem GlobalArmor FragGrenade Blood damage" );
+		armorFragShock = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " DamageSystem GlobalArmor FragGrenade Shock damage" );
 	
-		armorInfectedHP = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " DamageSystem GlobalArmor Infected Health damage" );
-		armorInfectedBlood = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " DamageSystem GlobalArmor Infected Blood damage" );
-		armorInfectedShock = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " DamageSystem GlobalArmor Infected Shock damage" );
+		armorInfectedHP = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " DamageSystem GlobalArmor Infected Health damage" );
+		armorInfectedBlood = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " DamageSystem GlobalArmor Infected Blood damage" );
+		armorInfectedShock = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " DamageSystem GlobalArmor Infected Shock damage" );
 
 		cargoSize = new TIntArray;
-		GetGame().ConfigGetIntArray( "cfgVehicles " + classname + " itemscargoSize", cargoSize);
+		GetGame().ConfigGetIntArray( "cfgVehicles " + classNameTemp + " itemscargoSize", cargoSize);
 	
 		attachments = new TStringArray;
-		GetGame().ConfigGetTextArray( "cfgVehicles " + classname + " attachments", attachments);
+		GetGame().ConfigGetTextArray( "cfgVehicles " + classNameTemp + " attachments", attachments);
 	}
 
 	void ~DZSMClothingDumpEntry()
@@ -506,10 +506,10 @@ static void DZSMClothingDump()
     int nClasses = GetGame().ConfigGetChildrenCount( "cfgVehicles" );
     for ( int nClass = 0; nClass < nClasses; ++nClass )
 	{
-    	string className;
-    	GetGame().ConfigGetChildName( "cfgVehicles", nClass, className );
-		if (GetGame().IsKindOf(className, "Clothing") && GetGame().ConfigGetInt( "cfgVehicles " + className + " scope" ) == 2) {
-			list.Insert(new DZSMClothingDumpEntry(className));
+    	string classNameTemp;
+    	GetGame().ConfigGetChildName( "cfgVehicles", nClass, classNameTemp );
+		if (GetGame().IsKindOf(classNameTemp, "Clothing") && GetGame().ConfigGetInt( "cfgVehicles " + classNameTemp + " scope" ) == 2) {
+			list.Insert(new DZSMClothingDumpEntry(classNameTemp));
 		}
     }
 	JsonFileLoader<array<ref DZSMClothingDumpEntry>>.JsonSaveFile(filepath, list);
@@ -555,52 +555,52 @@ class DZSMItemDumpEntry : DZSMBaseDumpEntry
 	float opticsDistanceZoomMax;
 	ref TFloatArray opticsDiscreteDistance;
 	
-	void DZSMItemDumpEntry(string classname)
+	void DZSMItemDumpEntry(string classNameTemp)
 	{
-		Init(classname, "cfgVehicles");
+		Init(classNameTemp, "cfgVehicles");
 
-		isMeleeWeapon = GetGame().ConfigGetInt( "cfgVehicles " + classname + " isMeleeWeapon" ) == 1;
-		repairKitType = GetGame().ConfigGetInt( "cfgVehicles " + classname + " repairKitType" );
+		isMeleeWeapon = GetGame().ConfigGetInt( "cfgVehicles " + classNameTemp + " isMeleeWeapon" ) == 1;
+		repairKitType = GetGame().ConfigGetInt( "cfgVehicles " + classNameTemp + " repairKitType" );
 
 		cargoSize = new TIntArray;
-		GetGame().ConfigGetIntArray( "cfgVehicles " + classname + " itemscargoSize", cargoSize);
+		GetGame().ConfigGetIntArray( "cfgVehicles " + classNameTemp + " itemscargoSize", cargoSize);
 	
 		attachments = new TStringArray;
-		GetGame().ConfigGetTextArray( "cfgVehicles " + classname + " attachments", attachments);
+		GetGame().ConfigGetTextArray( "cfgVehicles " + classNameTemp + " attachments", attachments);
 
 		recoilModifier = new TFloatArray;
-		GetGame().ConfigGetFloatArray( "cfgVehicles " + classname + " recoilModifier", recoilModifier);
+		GetGame().ConfigGetFloatArray( "cfgVehicles " + classNameTemp + " recoilModifier", recoilModifier);
 		swayModifier = new TFloatArray;
-		GetGame().ConfigGetFloatArray( "cfgVehicles " + classname + " swayModifier", swayModifier);
-		noiseShootModifier = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " noiseShootModifier");
-		dispersionModifier = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " dispersionModifier");
+		GetGame().ConfigGetFloatArray( "cfgVehicles " + classNameTemp + " swayModifier", swayModifier);
+		noiseShootModifier = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " noiseShootModifier");
+		dispersionModifier = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " dispersionModifier");
 		
-		if (GetGame().ConfigIsExisting( "cfgVehicles " + classname + " OpticsInfo distanceZoomMin" ))
+		if (GetGame().ConfigIsExisting( "cfgVehicles " + classNameTemp + " OpticsInfo distanceZoomMin" ))
 		{
-			opticsDistanceZoomMin = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " OpticsInfo distanceZoomMin" );
-			opticsDistanceZoomMax = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " OpticsInfo distanceZoomMax" );
+			opticsDistanceZoomMin = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " OpticsInfo distanceZoomMin" );
+			opticsDistanceZoomMax = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " OpticsInfo distanceZoomMax" );
 			opticsDiscreteDistance = new TFloatArray;
-			GetGame().ConfigGetFloatArray( "cfgVehicles " + classname + " OpticsInfo discreteDistance", opticsDiscreteDistance );
+			GetGame().ConfigGetFloatArray( "cfgVehicles " + classNameTemp + " OpticsInfo discreteDistance", opticsDiscreteDistance );
 		}
 
-		if (GetGame().ConfigIsExisting("cfgVehicles " + classname + " Nutrition fullnessIndex"))
+		if (GetGame().ConfigIsExisting("cfgVehicles " + classNameTemp + " Nutrition fullnessIndex"))
 		{
 			nutrition = new DZSMNutritionDumpEntry;
-			nutrition.fullnessIndex = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " Nutrition fullnessIndex" );
-			nutrition.energy = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " Nutrition energy" );
-			nutrition.water = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " Nutrition water" );
-			nutrition.nutritionalIndex = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " Nutrition nutritionalIndex" );
-			nutrition.toxicity = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " Nutrition toxicity" );
-			nutrition.digestibility = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " Nutrition digestibility" );
-			nutrition.agents = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " Nutrition agents" );
+			nutrition.fullnessIndex = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " Nutrition fullnessIndex" );
+			nutrition.energy = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " Nutrition energy" );
+			nutrition.water = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " Nutrition water" );
+			nutrition.nutritionalIndex = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " Nutrition nutritionalIndex" );
+			nutrition.toxicity = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " Nutrition toxicity" );
+			nutrition.digestibility = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " Nutrition digestibility" );
+			nutrition.agents = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " Nutrition agents" );
 		}
 
-		if (GetGame().ConfigIsExisting("cfgVehicles " + classname + " Medicine prevention"))
+		if (GetGame().ConfigIsExisting("cfgVehicles " + classNameTemp + " Medicine prevention"))
 		{
 			medicine = new DZSMMedicineDumpEntry;
-			medicine.prevention = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " Medicine prevention" );
-			medicine.treatment = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " Medicine treatment" );
-			medicine.diseaseExit = GetGame().ConfigGetFloat( "cfgVehicles " + classname + " Medicine diseaseExit" );
+			medicine.prevention = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " Medicine prevention" );
+			medicine.treatment = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " Medicine treatment" );
+			medicine.diseaseExit = GetGame().ConfigGetFloat( "cfgVehicles " + classNameTemp + " Medicine diseaseExit" );
 		}
 	}
 
@@ -649,10 +649,10 @@ static void DZSMItemDump()
     int nClasses = GetGame().ConfigGetChildrenCount( "cfgVehicles" );
     for ( int nClass = 0; nClass < nClasses; ++nClass )
 	{
-    	string className;
-    	GetGame().ConfigGetChildName( "cfgVehicles", nClass, className );
-		if (GetGame().IsKindOf(className, "Inventory_Base") && !GetGame().IsKindOf(className, "Clothing") && GetGame().ConfigGetInt( "cfgVehicles " + className + " scope" ) == 2) {
-			list.Insert(new DZSMItemDumpEntry(className));
+    	string classNameTemp;
+    	GetGame().ConfigGetChildName( "cfgVehicles", nClass, classNameTemp );
+		if (GetGame().IsKindOf(classNameTemp, "Inventory_Base") && !GetGame().IsKindOf(classNameTemp, "Clothing") && GetGame().ConfigGetInt( "cfgVehicles " + classNameTemp + " scope" ) == 2) {
+			list.Insert(new DZSMItemDumpEntry(classNameTemp));
 		}
     }
 	JsonFileLoader<array<ref DZSMItemDumpEntry>>.JsonSaveFile(filepath, list);
@@ -667,25 +667,25 @@ class DZSMContainerDumpEntry : DZSMBaseDumpEntry
 	
 	ref TStringArray attachments;
 	
-	void DZSMContainerDumpEntry(string classname)
+	void DZSMContainerDumpEntry(string classNameTemp)
 	{
-		Init(classname, "cfgVehicles");
+		Init(classNameTemp, "cfgVehicles");
 
-		canBeDigged = GetGame().ConfigGetInt( "cfgVehicles " + classname + " canBeDigged" );
-		heavyItem = GetGame().ConfigGetInt( "cfgVehicles " + classname + " heavyItem" );
+		canBeDigged = GetGame().ConfigGetInt( "cfgVehicles " + classNameTemp + " canBeDigged" );
+		heavyItem = GetGame().ConfigGetInt( "cfgVehicles " + classNameTemp + " heavyItem" );
 
 		cargoSize = new TIntArray;
-		if (GetGame().ConfigIsExisting( "cfgVehicles " + classname + " Cargo itemscargoSize" ))
+		if (GetGame().ConfigIsExisting( "cfgVehicles " + classNameTemp + " Cargo itemscargoSize" ))
 		{
-			GetGame().ConfigGetIntArray( "cfgVehicles " + classname + " Cargo itemscargoSize", cargoSize);
+			GetGame().ConfigGetIntArray( "cfgVehicles " + classNameTemp + " Cargo itemscargoSize", cargoSize);
 		}
 		else
 		{
-			GetGame().ConfigGetIntArray( "cfgVehicles " + classname + " itemscargoSize", cargoSize);
+			GetGame().ConfigGetIntArray( "cfgVehicles " + classNameTemp + " itemscargoSize", cargoSize);
 		}
 	
 		attachments = new TStringArray;
-		GetGame().ConfigGetTextArray( "cfgVehicles " + classname + " attachments", attachments);
+		GetGame().ConfigGetTextArray( "cfgVehicles " + classNameTemp + " attachments", attachments);
 	}
 
 	void ~DZSMContainerDumpEntry()
@@ -713,10 +713,10 @@ static void DZSMContainerDump()
     int nClasses = GetGame().ConfigGetChildrenCount( "cfgVehicles" );
     for ( int nClass = 0; nClass < nClasses; ++nClass )
 	{
-    	string className;
-    	GetGame().ConfigGetChildName( "cfgVehicles", nClass, className );
-		if (GetGame().IsKindOf(className, "Container_Base") && GetGame().ConfigGetInt( "cfgVehicles " + className + " scope" ) == 2) {
-			list.Insert(new DZSMContainerDumpEntry(className));
+    	string classNameTemp;
+    	GetGame().ConfigGetChildName( "cfgVehicles", nClass, classNameTemp );
+		if (GetGame().IsKindOf(classNameTemp, "Container_Base") && GetGame().ConfigGetInt( "cfgVehicles " + classNameTemp + " scope" ) == 2) {
+			list.Insert(new DZSMContainerDumpEntry(classNameTemp));
 		}
     }
 	JsonFileLoader<array<ref DZSMContainerDumpEntry>>.JsonSaveFile(filepath, list);
@@ -725,9 +725,9 @@ static void DZSMContainerDump()
 class DZSMZombieDumpEntry : DZSMDumpEntry
 {
 	
-	void DZSMZombieDumpEntry(string classname)
+	void DZSMZombieDumpEntry(string classNameTemp)
 	{
-		Init(classname, "cfgVehicles");
+		Init(classNameTemp, "cfgVehicles");
 
 	}
 
@@ -749,10 +749,10 @@ static void DZSMZombieDump()
     int nClasses = GetGame().ConfigGetChildrenCount( "cfgVehicles" );
     for ( int nClass = 0; nClass < nClasses; ++nClass )
 	{
-    	string className;
-    	GetGame().ConfigGetChildName( "cfgVehicles", nClass, className );
-		if (GetGame().IsKindOf(className, "ZombieBase") && GetGame().ConfigGetInt( "cfgVehicles " + className + " scope" ) == 2) {
-			list.Insert(new DZSMZombieDumpEntry(className));
+    	string classNameTemp;
+    	GetGame().ConfigGetChildName( "cfgVehicles", nClass, classNameTemp );
+		if (GetGame().IsKindOf(classNameTemp, "ZombieBase") && GetGame().ConfigGetInt( "cfgVehicles " + classNameTemp + " scope" ) == 2) {
+			list.Insert(new DZSMZombieDumpEntry(classNameTemp));
 		}
     }
 	JsonFileLoader<array<ref DZSMZombieDumpEntry>>.JsonSaveFile(filepath, list);
@@ -787,7 +787,7 @@ class ServerManagerEntry
 	string entryType;
 	string type;
 	string category;
-	string name;
+	string nameTemp;
 	int id;
 	string position;	
 	string speed;
@@ -948,12 +948,22 @@ class DayZServerManagerWatcher
 				ref ServerManagerEntry entry = new ServerManagerEntry();
 				
 				entry.entryType = "VEHICLE";
-				
-				if (itrCar.IsKindOf("ExpansionHelicopterScript"))
+				entry.nameTemp = itrCar.GetName();
+				entry.damage = itrCar.GetDamage();
+				entry.type = itrCar.GetType();
+				entry.id = itrCar.GetID();
+				entry.speed = itrCar.GetSpeed().ToString(false);
+				entry.position = itrCar.GetPosition().ToString(false);
+
+			#ifdef DZSM_DEBUG
+			//Print("DZSM ~ [Tick] ~ entry.type="+entry.type+" --- entry.type.Contains(RFFS)="+entry.type.Contains("RFFS")+" --- entry.type.Contains(RFWC)="+entry.type.Contains("RFWC"));
+			#endif
+
+				if ((itrCar.IsKindOf("ExpansionHelicopterScript")) || (entry.type.Contains("RFFS")))
 				{
 					entry.category = "AIR";
 				}
-				else if (itrCar.IsKindOf("ExpansionBoatScript"))
+				else if ((itrCar.IsKindOf("ExpansionBoatScript")) || (entry.type.Contains("RFWC")))
 				{
 					entry.category = "SEA";
 				}
@@ -962,12 +972,7 @@ class DayZServerManagerWatcher
 					entry.category = "GROUND";
 				}
 				
-				entry.name = itrCar.GetName();
-				entry.damage = itrCar.GetDamage();
-				entry.type = itrCar.GetType();
-				entry.id = itrCar.GetID();
-				entry.speed = itrCar.GetSpeed().ToString(false);
-				entry.position = itrCar.GetPosition().ToString(false);
+				
 				
 				container.vehicles.Insert(entry);
 			}
@@ -986,7 +991,7 @@ class DayZServerManagerWatcher
 				playerEntry.entryType = "PLAYER";
 				playerEntry.category = "MAN";
 
-				playerEntry.name = player.GetIdentity().GetName();
+				playerEntry.nameTemp = player.GetIdentity().GetName();
 				// player.GetDisplayName();
 				playerEntry.damage = player.GetDamage();
 				playerEntry.type = player.GetType();

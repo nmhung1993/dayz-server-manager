@@ -1,6 +1,7 @@
 import * as path from 'path';
 import { Manager } from '../control/manager';
 import { Paths } from '../services/paths';
+import { Monitor } from '../services/monitor';
 import { Processes, SpawnOutput } from '../services/processes';
 import { LogLevel } from '../util/logger';
 import { sameDirHash } from '../util/compare-folders';
@@ -173,6 +174,7 @@ export class SteamCMD extends IService {
 
     private progressRegex = /Update state \(0x\d+\) (?<step>.*), progress: (?<progress>\d+.\d+) \((?<current>\d+) \/ (?<total>\d+)\)$/;
     private dlItemRegex = /Downloading item (?<item>\d+) \.\.\./;
+    public isNewModUpdated: boolean = false;
 
     public constructor(
         loggerFactory: LoggerFactory,
@@ -182,6 +184,7 @@ export class SteamCMD extends IService {
         private downloader: Downloader,
         private metaData: SteamMetaData,
         private eventBus: EventBus,
+        //private monitory: Monitor,
         @inject(InjectionTokens.fs) private fs: FSAPI,
     ) {
         super(loggerFactory.createLogger('SteamCMD'));
@@ -437,7 +440,7 @@ export class SteamCMD extends IService {
             validate?: boolean,
         },
     ): Promise<boolean> {
-
+        
         const serverPath = this.manager.getServerPath();
         this.fs.mkdirSync(serverPath, { recursive: true });
 
@@ -693,11 +696,13 @@ export class SteamCMD extends IService {
         let curBatch: Partial<PublishedFileDetail>[] = [];
         for (const mod of bySize) {
             const curBatchFileSize = curBatch.reduce((acc, x) => acc + (x.file_size || 0), 0);
-
             // if this mod would exceed the download limit, then execute the batch first
             if (curBatch.length && (curBatchFileSize + (mod.file_size || 0)) >= maxDownloadSize) {
-                if (!await this.updateMod(curBatch.map((x) => x.publishedfileid))) {
+                if (!await (this.updateMod(curBatch.map((x) => x.publishedfileid)))) {
+                    this.isNewModUpdated = false;
                     return false;
+                }else{
+                    this.isNewModUpdated = true;
                 }
                 curBatch = [];
             }
@@ -706,24 +711,33 @@ export class SteamCMD extends IService {
 
             // check if batch is full or exceeds size limit
             if (curBatchFileSize >= maxDownloadSize || curBatch.length >= maxBatchSize) {
-                if (!await this.updateMod(
+                if (!await (this.updateMod(
                     curBatch.map((x) => x.publishedfileid),
                     {
                         validate: opts?.validate,
                         listener: opts?.listener,
                     },
-                )) {
-                    return false;
+                ))) {
+                    this.isNewModUpdated = false;
+                    return false;                    
+                }else{
+                    this.isNewModUpdated = true;
                 }
                 curBatch = [];
             }
         }
         // update the rest
         if (curBatch.length) {
-            if (!await this.updateMod(curBatch.map((x) => x.publishedfileid))) {
+            if (!await (this.updateMod(curBatch.map((x) => x.publishedfileid)))) {                
+                this.isNewModUpdated = false;
                 return false;
+            }else{
+                this.isNewModUpdated = true;
             }
         }
+
+        this.log.log(LogLevel.INFO, `[steamcmd] updateAllMods() running... isNewModUpdated = ${this.isNewModUpdated}`);
+
         return true;
     }
 
@@ -825,6 +839,7 @@ export class SteamCMD extends IService {
     }
 
     public async installMods(): Promise<boolean> {
+        this.log.log(LogLevel.INFO, `[steamcmd] installMods() running...`);
         const modIds = this.manager.getCombinedModIdList();
 
         const installed = Promise.all(modIds.map((modId) => this.installMod(modId)));
@@ -862,6 +877,7 @@ export class SteamCMD extends IService {
     }
 
     public async checkMods(): Promise<boolean> {
+        this.log.log(LogLevel.INFO, `[steamcmd] checkMods() running...`);
         const wsPath = this.getWsPath();
         return this.manager.getCombinedModIdList()
             .every((modId) => {

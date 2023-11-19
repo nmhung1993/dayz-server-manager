@@ -5,5 +5,10 @@
     ],
     "eslint.validate": [
         "typescript"
-    ]
+    ],
+    "files.associations": {
+        "system_error": "c",
+        "xlocale": "c",
+        "xstring": "c"
+    }
 }

@@ -1,4 +1,4 @@
-// #define DZSM_DEBUG_CONTAINER
+ #define DZSM_DEBUG_CONTAINER
 
 class DayZServerManagerContainer
 {
@@ -17,10 +17,13 @@ class DayZServerManagerContainer
 		#ifdef DZSM_DEBUG_CONTAINER
 		Print("DZSM ~ UnRegistered: " + vehicle.GetType());
 		#endif
-		int i = m_vehicles.Find(vehicle);
-		if (i >= 0)
+		if (vehicle != NULL)
 		{
-			m_vehicles.Remove(i);
+			int i = m_vehicles.Find(vehicle);
+			if (i >= 0)
+			{
+				m_vehicles.Remove(i);
+			}
 		}
     }
 
