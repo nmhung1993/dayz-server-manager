@@ -10,6 +10,7 @@ import { LogEntryEvent } from '../types/log-reader';
 import { MetricEntryEvent } from '../types/metrics';
 import { DiscordMessage } from '../types/discord';
 import { GameUpdatedStatus, ModUpdatedStatus } from '../types/steamcmd';
+import { Console } from 'console';
 
 @singleton()
 @injectable()
@@ -39,7 +40,11 @@ export class EventBus extends IService {
         data: any,
     ): void;
     public emit(name: InternalEventTypes, data?: any): void {
-        this.EVENT_EMITTER.emit(name, data);
+        try{
+            this.EVENT_EMITTER.emit(name, data);
+        }catch(e){
+            console.log(`[event-bus] emit() ERORR: ${e}`);
+        }
     }
 
     public on(name: InternalEventTypes.DISCORD_MESSAGE, listener: (message: DiscordMessage) => Promise<any>): Listener;
@@ -54,11 +59,19 @@ export class EventBus extends IService {
         listener: () => Promise<any>,
     ): Listener;
     public on(name: InternalEventTypes, listener: (...data: any[]) => Promise<any>): Listener {
-        return this.EVENT_EMITTER.on(name, listener, { objectify: true }) as Listener;
+        try{
+            return this.EVENT_EMITTER.on(name, listener, { objectify: true }) as Listener;
+        }catch(e){
+            console.log(`[event-bus] on() ERORR: ${e}`);
+        }
     }
 
     public clear(name: InternalEventTypes): void {
-        this.EVENT_EMITTER.removeAllListeners(name);
+        try{
+            this.EVENT_EMITTER.removeAllListeners(name);
+        }catch(e){
+            console.log(`[event-bus] clear() ERORR: ${e}`);
+        }
     }
 
 }

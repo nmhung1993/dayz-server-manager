@@ -728,7 +728,7 @@ export class Config {
      * Time (in ms) between each server check
      */
     public serverProcessPollIntervall: number = 30000;
-
+    public modUpdateChekerIntervall: number = 1200000;
     /**
      * Disable the server stuck check.
      * The server can enter a "idle state" when no players are connected and the CE idle mode is enabled.

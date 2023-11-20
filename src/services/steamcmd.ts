@@ -1,7 +1,6 @@
 import * as path from 'path';
 import { Manager } from '../control/manager';
 import { Paths } from '../services/paths';
-import { Monitor } from '../services/monitor';
 import { Processes, SpawnOutput } from '../services/processes';
 import { LogLevel } from '../util/logger';
 import { sameDirHash } from '../util/compare-folders';
@@ -175,7 +174,7 @@ export class SteamCMD extends IService {
     private progressRegex = /Update state \(0x\d+\) (?<step>.*), progress: (?<progress>\d+.\d+) \((?<current>\d+) \/ (?<total>\d+)\)$/;
     private dlItemRegex = /Downloading item (?<item>\d+) \.\.\./;
     public isNewModUpdated: boolean = false;
-
+    public listModUpdatedID: string[];
     public constructor(
         loggerFactory: LoggerFactory,
         private manager: Manager,
@@ -667,6 +666,9 @@ export class SteamCMD extends IService {
         validate?: boolean,
         listener?: SteamCmdEventListener,
     }): Promise<boolean> {
+
+        this.listModUpdatedID = [];
+
         const modIds = opts?.force
             ?  this.manager.getCombinedModIdList()
             : await this.metaData.modNeedsUpdate(
@@ -674,6 +676,8 @@ export class SteamCMD extends IService {
             );
 
         const modsMeta = (await this.metaData.getModsMetaData(modIds)) || [];
+
+        this.log.log(LogLevel.INFO, `[steamcmd] updateAllMods() running...`);
 
         // sort descending by size
         const bySize: Partial<PublishedFileDetail>[] = modsMeta
@@ -703,6 +707,7 @@ export class SteamCMD extends IService {
                     return false;
                 }else{
                     this.isNewModUpdated = true;
+                    this.listModUpdatedID = curBatch.map((x) => x.publishedfileid);
                 }
                 curBatch = [];
             }
@@ -722,6 +727,7 @@ export class SteamCMD extends IService {
                     return false;                    
                 }else{
                     this.isNewModUpdated = true;
+                    this.listModUpdatedID = curBatch.map((x) => x.publishedfileid);
                 }
                 curBatch = [];
             }
@@ -733,10 +739,11 @@ export class SteamCMD extends IService {
                 return false;
             }else{
                 this.isNewModUpdated = true;
+                this.listModUpdatedID = curBatch.map((x) => x.publishedfileid);
             }
         }
 
-        this.log.log(LogLevel.INFO, `[steamcmd] updateAllMods() running... isNewModUpdated = ${this.isNewModUpdated}`);
+        this.log.log(LogLevel.INFO, `[steamcmd] updateAllMods() isNewModUpdated = ${this.isNewModUpdated}`);
 
         return true;
     }

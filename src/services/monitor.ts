@@ -2,6 +2,7 @@ import { Manager } from '../control/manager';
 import { Processes } from '../services/processes';
 import { LogLevel } from '../util/logger';
 import { ServerState } from '../types/monitor';
+import { ModUpdatedStatus } from '../types/steamcmd';
 import { IStatefulService } from '../types/service';
 import { inject, injectable, singleton } from 'tsyringe';
 import { LoggerFactory } from './loggerfactory';
@@ -11,6 +12,7 @@ import { InternalEventTypes } from '../types/events';
 import { ServerStarter } from './server-starter';
 import { ServerDetector } from './server-detector';
 import { SteamCMD } from '../services/steamcmd';
+import { DiscordEventConverter } from '../services/discord-event-converter';
 
 export type ServerStateListener = (state: ServerState) => any;
 
@@ -21,6 +23,8 @@ export class Monitor extends IStatefulService {
     public loopInterval = 500;
     private tickRunning = false;
     private lastTick = 0;
+    private modUpdateCheckerRunning = false;
+    private lastModUpdateChecker = 0;
 
     public isNewModUpdated = false;
     public restartLock: boolean = false;
@@ -43,6 +47,7 @@ export class Monitor extends IStatefulService {
         private serverStarter: ServerStarter,
         private serverDetector: ServerDetector,
         private steamCmd: SteamCMD,
+        private discordEventConverter: DiscordEventConverter,
         @inject(InjectionTokens.fs) private fs: FSAPI,
     ) {
         super(loggerFactory.createLogger('Monitor'));
@@ -73,6 +78,9 @@ export class Monitor extends IStatefulService {
             this.$internalServerState,
             previousState,
         );
+        
+        //discordEventConverter
+        this.discordEventConverter.handleServerState(this.$internalServerState,previousState);
     }
 
     public get serverState(): ServerState {
@@ -88,34 +96,71 @@ export class Monitor extends IStatefulService {
     }
 
     public async start(): Promise<void> {
-        if (this.timers.getTimer('tick')) return;
-        this.lastTick = 0;
-        this.tickRunning = false;
-        this.timers.addInterval(
-            'tick',
-            () => {
-                if (this.tickRunning) {
-                    return;
-                }
-                if (
-                    (new Date().valueOf() - this.lastTick)
-                        > this.manager.config.serverProcessPollIntervall
-                ) {
-                    this.tickRunning = true;
-                    const cb = (): void => {
-                        this.tickRunning = false;
+        //tickChekerTimer
+        //if (this.timers.getTimer('tick')) return;
+        if (!this.timers.getTimer('tick')){
+            this.lastTick = 0;
+            this.tickRunning = false;
+            this.timers.addInterval(
+                'tick',
+                () => {
+                    if (this.tickRunning) {
+                        return;
+                    }
+                    if (
+                        (new Date().valueOf() - this.lastTick)
+                            > this.manager.config.serverProcessPollIntervall
+                    ) {
+                        this.tickRunning = true;
+                        const cb = (): void => {
+                            this.tickRunning = false;
 
-                        // set lsat tick time (might be edited by tick itself)
-                        this.lastTick = Math.max(
-                            this.lastTick,
-                            new Date().valueOf(),
-                        );
-                    };
-                    this.tick().then(cb, cb);
-                }
-            },
-            this.loopInterval,
-        );
+                            // set lsat tick time (might be edited by tick itself)
+                            this.lastTick = Math.max(
+                                this.lastTick,
+                                new Date().valueOf(),
+                            );
+                        };
+                        this.tick().then(cb, cb);
+                    }
+                },
+                this.loopInterval,
+            );
+        }
+
+        //modUpdateCheckerTimer
+        //if (this.timers.getTimer('modUpdateChecker')) return;
+        if (!this.timers.getTimer('modUpdateChecker')){
+            this.log.log(LogLevel.INFO, '[monitor.start] Create modUpdateChecker timer');
+            this.lastModUpdateChecker = 0;
+            this.modUpdateCheckerRunning = false;
+            this.timers.addInterval(
+                'modUpdateChecker',
+                () => {
+                    if (this.modUpdateCheckerRunning) {
+                        return;
+                    }
+                    if (
+                        (new Date().valueOf() - this.lastModUpdateChecker)
+                            > this.manager.config.modUpdateChekerIntervall
+                    ) {
+                        this.modUpdateCheckerRunning = true;
+                        const cb = (): void => {
+                            this.modUpdateCheckerRunning = false;
+
+                            // set lsat tick time (might be edited by tick itself)
+                            this.lastModUpdateChecker = Math.max(
+                                this.lastModUpdateChecker,
+                                new Date().valueOf(),
+                            );
+                        };
+                        this.ModUpadeChecker().then(cb, cb);
+                    }
+                },
+                this.loopInterval,
+            );
+        }
+
         this.log.log(LogLevel.IMPORTANT, 'Starting to watch server');
     }
 
@@ -124,6 +169,19 @@ export class Monitor extends IStatefulService {
         this.timers.removeAllTimers();
         this.eventBus.clear(InternalEventTypes.MONITOR_STATE_CHANGE);
         this.log.log(LogLevel.IMPORTANT, 'Stoping to watch server');
+    }
+
+    private async ModUpadeChecker(): Promise<void>{
+        // if (this.manager.config.disableModUpdate) {
+        //     return;
+        // }
+        try {
+            if (!await this.steamCmd.updateAllMods()) {
+                throw new Error('Updating Mods failed');
+            }
+        } catch (e) {
+            this.log.log(LogLevel.ERROR, '[monitor.ModUpadeChecker] Error during loop', e);
+        }
     }
 
     private async tick(): Promise<void> {
@@ -166,8 +224,6 @@ export class Monitor extends IStatefulService {
                 this.internalServerState = ServerState.STARTED;
 
                 if(!this.isStartedMsgSent){
-                    //${this.config$.dayzExperimentalServerSteamAppId}
-                    //const message = `Server đã khởi động! <@&1029393511730126930>`;
                     const message = `Server đã khởi động! <@&${this.manager.getDiscordRoleID()}>`;
                     this.log.log(LogLevel.IMPORTANT, message);
                     this.eventBus.emit(
@@ -184,19 +240,16 @@ export class Monitor extends IStatefulService {
                 this.isStartedMsgSent = false;
             }
 
-            if (!await this.steamCmd.checkMods()) {
-                if (!await this.steamCmd.updateAllMods()) {
-                    throw new Error('Updating Mods failed');
-                }   
-            }
-            // if (!await this.steamCmd.checkMods()) {
-            //     throw new Error('Mod installation failed');
-            // }
-
             if (needsRestart) {
                 this.restartServer();
             } else if (this.steamCmd.isNewModUpdated){
                 this.log.log(LogLevel.IMPORTANT, `[Monitor.restartServer] isNewModUpdated = ${this.steamCmd.isNewModUpdated}`);
+                
+                const modUpdateStatus: ModUpdatedStatus = { 
+                    modIds: this.steamCmd.listModUpdatedID, 
+                    success: this.steamCmd.isNewModUpdated
+                };
+                this.discordEventConverter.handleModUpdated(modUpdateStatus);
                 this.restartServer();
             } else if (!this.manager.config.disableStuckCheck) {
                 await this.checkPossibleStuckState();
@@ -209,14 +262,14 @@ export class Monitor extends IStatefulService {
     public async restartServer(){
         this.log.log(LogLevel.IMPORTANT, '[Monitor.restartServer] Restarting...');
         this.internalServerState = ServerState.STARTING;
+        await this.serverStarter.killServer();
         await this.serverStarter.startServer(this.initialStart);
         this.lastServerUsages = [];
         this.initialStart = false;
+        this.steamCmd.isNewModUpdated = false;
 
         // give the server a minute to start up
-        this.skipLoop(60000);
-
-        this.steamCmd.isNewModUpdated = false;
+        this.skipLoop(60000);        
     }
 
     public async checkPossibleStuckState(): Promise<boolean> {
