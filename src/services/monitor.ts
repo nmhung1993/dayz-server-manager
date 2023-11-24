@@ -29,7 +29,6 @@ export class Monitor extends IStatefulService {
     public isNewModUpdated = false;
     public restartLock: boolean = false;
     private initialStart: boolean = true;
-    private isStartedMsgSent = false;
 
     // cached path to server lock file
     private lockPath: string;
@@ -222,22 +221,8 @@ export class Monitor extends IStatefulService {
                 this.initialStart = false;
                 this.log.log(LogLevel.INFO, 'Server running...');
                 this.internalServerState = ServerState.STARTED;
-
-                if(!this.isStartedMsgSent){
-                    const message = `Server đã khởi động! <@&${this.manager.getDiscordRoleID()}>`;
-                    this.log.log(LogLevel.IMPORTANT, message);
-                    this.eventBus.emit(
-                        InternalEventTypes.DISCORD_MESSAGE,
-                        {
-                            type: 'notification',
-                            message,
-                        },
-                    );
-                    this.isStartedMsgSent = true;
-                }
             } else {
                 this.internalServerState = ServerState.STOPPED;
-                this.isStartedMsgSent = false;
             }
 
             if (needsRestart) {
