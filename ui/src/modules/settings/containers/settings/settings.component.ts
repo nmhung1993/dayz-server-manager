@@ -70,14 +70,14 @@ export class SettingsComponent implements OnInit {
         this.appCommon.fetchManagerConfig().toPromise().then(
             (config) => {
                 this.config = config;
-                if (this.config.discordChannels?.length) {
-                    this.config.discordChannels = this.config.discordChannels.map((x) => {
-                        if (typeof x.mode === 'string') {
-                            x.mode = [x.mode];
-                        }
-                        return x;
-                    })
-                }
+                // if (this.config.discordChannels?.length) {
+                //     this.config.discordChannels = this.config.discordChannels.map((x) => {
+                //         if (typeof x.mode === 'string') {
+                //             x.mode = [x.mode];
+                //         }
+                //         return x;
+                //     })
+                // }
 
                 if (this.config.serverCfg) {
                     this.serverCfgProps = this.getServerCfgProps(this.config);
@@ -91,19 +91,19 @@ export class SettingsComponent implements OnInit {
         );
     }
 
-    public getDiscordChannels(): {
-        channel: string;
-        mode: DiscordChannelType[];
-    }[] {
-        return this.config.discordChannels as any;
-    }
+    // public getDiscordChannels(): {
+    //     channel: string;
+    //     mode: DiscordChannelType[];
+    // }[] {
+    //     return this.config.discordChannels as any;
+    // }
 
-    public addDiscordChannel(): void {
-        this.config.discordChannels.push({
-            channel: '',
-            mode: ['admin'],
-        });
-    }
+    // public addDiscordChannel(): void {
+    //     this.config.discordChannels.push({
+    //         channel: '',
+    //         mode: ['admin'],
+    //     });
+    // }
 
     private getServerCfgProps(config: Config): Property[] {
         const fixedKeys = ['motd', 'motdInterval', 'Missions'] as ServerCfgKey[];

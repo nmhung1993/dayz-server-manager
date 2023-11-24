@@ -16,30 +16,6 @@
                 <div class="row spaced">
                     <div class="col-md-12">
                         <div class="form-group">
-                            <label for="name">Discord Admin ID</label>
-                            <pre class="small text-muted">
-                                {{ 'User id của loz admin, cho mỗi lần lỗi bot nó noti :))' }}
-                            </pre>
-                            <input type="text" class="form-control" id="discordAdminID" required
-                                [(ngModel)]="config.discordAdminID" name="discordAdminID" #discordAdminID="ngModel">
-                            <div [hidden]="discordAdminID.valid || discordAdminID.pristine" class="alert alert-danger">
-                                Paste userId của thằng loz admin để bot noiti nó khi detect lỗi.
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="name">Discord Role ID</label>
-                            <pre class="small text-muted">
-                                {{ 'Role id của mấy khứa pick role noti DayZ' }}
-                            </pre>
-                            <input type="text" class="form-control" id="discordRoleID" required
-                                [(ngModel)]="config.discordRoleID" name="discordRoleID" #discordRoleID="ngModel">
-                            <div [hidden]="discordRoleID.valid || discordRoleID.pristine" class="alert alert-danger">
-                                Paste roleID của role DayZ để noti khi server chạy.
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
                             <label for="name">Instance ID</label>
                             <pre class="small text-muted">
                                 {{ 'Tên instance(folder name) của server' }}
@@ -104,44 +80,71 @@
                             <pre class="small text-muted">
                                 {{ "Kênh mà con bot sẽ hoạt động, nchung đừng chỉnh sửa linh tinh nếu không rõ.\n\nCó 3 loại kênh chính:\n'admin' - kênh này sẽ nhận lệnh của admin\n'rcon' - kênh này sẽ ghi lại log của RCON\n'notification' - kênh này sẽ noti cho người chơi khi server restart, update, etc...\n" }}
                             </pre>
-                            <div class="row" *ngFor="let chan of getDiscordChannels(); let idx = index">
-                                <div class="col-md-6">
-                                    <input  type="text"
-                                            class="form-control"
-                                            [(ngModel)]="chan.channel"
-                                            [ngModelOptions]="{standalone: true}"
-                                    >
+                            <div class="form-group">
+                                <label for="name">ID Channel Admin</label>
+                                <pre class="small text-muted">
+                                    {{ '' }}
+                                </pre>
+                                <input type="text" class="form-control" id="channelAdmin" required
+                                    [(ngModel)]="config.channelAdmin" name="channelAdmin" #channelAdmin="ngModel">
+                                <div [hidden]="channelAdmin.valid || channelAdmin.pristine" class="alert alert-danger">
+                                    Paste ID của Channel ADMIN để gọi lệnh điều khiển bot.
                                 </div>
-                                <div class="col-md-1">
-                                    <button class="btn btn-danger form-control" type="button" (click)="config.discordChannels.splice(idx, 1)">
-                                        <fa-icon class="mr-1" [icon]='["fas", "trash"]'></fa-icon>Xoá Channel
-                                    </button>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="name">ID Channel RCON</label>
+                                <pre class="small text-muted">
+                                    {{ '' }}
+                                </pre>
+                                <input type="text" class="form-control" id="channelRCON" required
+                                    [(ngModel)]="config.channelRCON" name="channelRCON" #channelRCON="ngModel">
+                                <div [hidden]="channelRCON.valid || channelRCON.pristine" class="alert alert-danger">
+                                    Paste ID của Channel RCON để nhận log RCON commands.
                                 </div>
-                                <div class="col-md-4">
-                                    <div *ngFor="let mode of chan.mode; let modeidx = index" style="display: flex; flex-direction: row;">
-                                        <select class="form-control"
-                                                [(ngModel)]="chan.mode[modeidx]"
-                                                [ngModelOptions]="{standalone: true}"
-                                        >
-                                            <option [ngValue]="'admin'">Admin</option>
-                                            <option [ngValue]="'rcon'">RCon</option>
-                                            <option [ngValue]="'notification'">Notification</option>
-                                        </select>
-                                        <button class="btn btn-danger form-control" type="button" (click)="chan.mode.splice(modeidx, 1)">
-                                            <fa-icon class="mr-1" [icon]='["fas", "trash"]'></fa-icon>Xoá Mode
-                                        </button>
-                                    </div>
-                                    <button type="button" class="btn form-control" (click)="chan.mode.push('admin')">
-                                        <fa-icon class="mr-1" [icon]='["fas", "plus-circle"]'></fa-icon>Thêm Mode
-                                    </button>
-                                </div>
+                            </div>
 
+                            <div class="form-group">
+                                <label for="name">ID Channel Notification</label>
+                                <pre class="small text-muted">
+                                    {{ '' }}
+                                </pre>
+                                <input type="text" class="form-control" id="channelNoti" required
+                                    [(ngModel)]="config.channelNoti" name="channelNoti" #channelNoti="ngModel">
+                                <div [hidden]="channelNoti.valid || channelNoti.pristine" class="alert alert-danger">
+                                    Paste ID của Channel Notification để user nhận thông báo.
+                                </div>
                             </div>
                         </div>
-                        <button type="button" class="btn form-control" (click)="config.discordChannels.push({channel: '', mode: 'admin'})">
-                            <fa-icon class="mr-1" [icon]='["fas", "plus-circle"]'></fa-icon>Thêm Channel
-                        </button>
                     </div>
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="name">Discord Admin ID</label>
+                            <pre class="small text-muted">
+                                {{ 'User id của loz admin, cho mỗi lần lỗi bot nó noti :))' }}
+                            </pre>
+                            <input type="text" class="form-control" id="discordAdminID" required
+                                [(ngModel)]="config.discordAdminID" name="discordAdminID" #discordAdminID="ngModel">
+                            <div [hidden]="discordAdminID.valid || discordAdminID.pristine" class="alert alert-danger">
+                                Paste userId của thằng loz admin để bot noiti nó khi detect lỗi.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="name">Discord Role ID</label>
+                            <pre class="small text-muted">
+                                {{ 'Role id của mấy khứa pick role noti DayZ' }}
+                            </pre>
+                            <input type="text" class="form-control" id="discordRoleID" required
+                                [(ngModel)]="config.discordRoleID" name="discordRoleID" #discordRoleID="ngModel">
+                            <div [hidden]="discordRoleID.valid || discordRoleID.pristine" class="alert alert-danger">
+                                Paste roleID của role DayZ để noti khi server chạy.
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
 
                 <strong>DayZ</strong>
