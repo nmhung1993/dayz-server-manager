@@ -443,10 +443,6 @@ export type DiscordChannelType =
     ;
 
 export class Config {
-
-    public discordRoleID: string = '';
-    public discordAdminID: string = '';
-
     /**
      * The instance name of this server
      * @required
@@ -587,10 +583,15 @@ export class Config {
      *
      * Mode can also be a list of modes, i.e.: ['rcon', 'notification']
      */
-    public discordChannels: {
-        channel: string;
-        mode: DiscordChannelType | DiscordChannelType[]
-    }[] = [];
+
+    public discordRoleID: string = '';
+    public discordAdminID: string = '';
+
+    //public discordCmdPrefix: string = '!dz.';
+
+    public channelAdmin: string = '';
+    public channelRCON: string = '';
+    public channelNoti: string = '';
 
     // /////////////////////////// DayZ ///////////////////////////////////////
 
