@@ -2,6 +2,7 @@ import {
     TextChannel,
     Client,
     Message,
+    Intents   
 } from 'discord.js';
 import { DiscordMessageHandler } from '../interface/discord-message-handler';
 import { IStatefulService } from '../types/service';
@@ -11,7 +12,7 @@ import { injectable, singleton } from 'tsyringe';
 import { LoggerFactory } from './loggerfactory';
 import { EventBus } from '../control/event-bus';
 import { InternalEventTypes } from '../types/events';
-import { DiscordMessage, isDiscordChannelType } from '../types/discord';
+import { DiscordMessage } from '../types/discord';
 
 @singleton()
 @injectable()
@@ -22,7 +23,7 @@ export class DiscordBot extends IStatefulService {
 
     private msgQueue: DiscordMessage[] = [];
 
-    public debug: boolean = false;
+    public debug: boolean = true;
 
     public constructor(
         loggerFactory: LoggerFactory,
@@ -45,14 +46,26 @@ export class DiscordBot extends IStatefulService {
             return;
         }
 
-        const client = new Client();
+        const client = new Client({
+            intents: [
+                Intents.FLAGS.GUILDS, 
+                Intents.FLAGS.GUILD_MESSAGES 
+            ]
+        });
+        client.login("MTE3NDMwMjg5ODc4NDU3OTU4NA.GcHeOK.ZeIG4tp5F9os4SxENElEPNBbL67FBlWmf4-6NY");
         client.on('ready', () => this.onReady());
         if (this.debug) {
             client.on('invalidated', () => this.log.log(LogLevel.ERROR, 'invalidated'));
             client.on('debug', (m) => this.log.log(LogLevel.DEBUG, m));
             client.on('warn', (m) => this.log.log(LogLevel.WARN, m));
         }
-        client.on('message', (m) => this.onMessage(m));
+        //client.on('message', (m) => this.onMessage(m));
+        client.on('messageCreate', (m) => {
+            if (m.content.toLowerCase() == 'ping') {
+                m.reply('pong');
+            } else
+                this.onMessage(m);
+        });
         client.on('disconnect', (d) => {
             if (d?.wasClean) {
                 this.log.log(LogLevel.INFO, 'disconnect');
@@ -61,11 +74,17 @@ export class DiscordBot extends IStatefulService {
             }
         });
         client.on('error', (e) => this.log.log(LogLevel.ERROR, 'error', e));
+        // client.on('interactionCreate', async interaction => {
+        //     if (!interaction.isCommand()) return;
+          
+        //     if (interaction.commandName === 'ping') {
+        //       await interaction.reply('Pong!');
+        //     }
+        //   });
 
         try {
             this.log.log(LogLevel.IMPORTANT, `Starting login discord bot with token: ${this.manager.config.discordBotToken}`);
             await client.login(this.manager.config.discordBotToken);
-            //this.log.log(LogLevel.IMPORTANT, `${client.login(this.manager.config.discordBotToken)}`);
             this.client = client;
             this.sendQueuedMessage();
         } catch (e) {
@@ -84,12 +103,12 @@ export class DiscordBot extends IStatefulService {
             const msgQueue = this.msgQueue;
             this.msgQueue = [];
             for (const msg of msgQueue) {
-                void this.sendMessage(msg);
+                this.sendMessage(msg);
             }
         }, 1000);
     }
 
-    private onMessage(message: Message): void {
+    private onMessage(message: Message) : void {
         if (message.author.bot) {
             return;
         }
@@ -98,7 +117,8 @@ export class DiscordBot extends IStatefulService {
             this.log.log(LogLevel.DEBUG, `Detected message: ${message.content}`);
         }
 
-        if (message.content?.startsWith(this.messageHandler.PREFIX)) {
+        if (message.content?.startsWith(this.messageHandler.PREFIX)
+            && message.channelId === this.manager.config.channelAdmin) {
             void this.messageHandler.handleCommandMessage(message);
         }
     }
@@ -119,27 +139,17 @@ export class DiscordBot extends IStatefulService {
             return;
         }
 
-        const channels = this.manager.config.discordChannels
-            ?.filter((x) => isDiscordChannelType(x.mode, message.type));
-        //const matching = channels
-        const matching = this.client?.guilds?.cache.first()?.channels.cache
-            ?.filter((channel) => {
-                return channels?.some((x) => x.channel === channel.name?.toLowerCase()) ?? false;
-            }).array() || [];
-        for (const x of matching) {
-            try {
-                if (message.message) {
-                    await (x as TextChannel).send(message.message);
-                }
-                if (message.embeds?.length) {
-                    for (const embed of message.embeds) {
-                        await (x as TextChannel).send(embed);
-                    }
-                }
-            } catch (e) {
-                this.log.log(LogLevel.ERROR, `Error relaying message to channel: ${x.name}`, e);
-            }
+        let TargetChannel;
+
+        if(message.type.toString() === 'notification'){
+            TargetChannel = this.client.channels.cache.get(`${this.manager.config.channelNoti}`) as TextChannel;
+        }else if(message.type.toString() === 'admin'){
+            TargetChannel = this.client.channels.cache.get(`${this.manager.config.channelAdmin}`) as TextChannel;
+        }else if(message.type.toString() === 'rcon'){
+            TargetChannel = this.client.channels.cache.get(`${this.manager.config.channelRCON}`) as TextChannel;
         }
+        TargetChannel?.send(`${message.message}`);
+        
     }
 
 }

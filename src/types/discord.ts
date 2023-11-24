@@ -2,8 +2,9 @@ import { MessageEmbed } from "discord.js";
 import { DiscordChannelType } from "../config/config";
 
 export interface DiscordMessage {
-    type: DiscordChannelType,
-    message: string,
+    type?: DiscordChannelType,
+    message?: string,
+    channelID?: string,
     embeds?: MessageEmbed[],
 }
 

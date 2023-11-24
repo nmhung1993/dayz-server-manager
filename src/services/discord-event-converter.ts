@@ -144,7 +144,7 @@ export class DiscordEventConverter extends IService {
             this?.log?.log(LogLevel.INFO, `handleServerState() - newState: ${newState} // previousState: ${previousState}`);
             // msg about server startup
             if ((newState === ServerState.STARTED)&&(previousState === ServerState.STARTING)) {
-                const message = `Server đã khởi động! <@&${this.manager.getDiscordRoleID()}>`;
+                const message = `Server đã khởi động! <@&${this.manager.config.discordRoleID}>`;
                 this?.log?.log(LogLevel.IMPORTANT, message);
                 this.eventBus.emit(
                     InternalEventTypes.DISCORD_MESSAGE,
@@ -157,13 +157,12 @@ export class DiscordEventConverter extends IService {
 
             // msg about server stop
             if ((newState === ServerState.STOPPED)&&(previousState === ServerState.STOPPING)) {
-            //if (newState === ServerState.STOPPED) {
-                const message = 'Đã dừng server. Yupp!';
+                const message = 'Server đã dừng!';
                 this?.log?.log(LogLevel.IMPORTANT, message);
                 this.eventBus.emit(
                     InternalEventTypes.DISCORD_MESSAGE,
                     {
-                        type: 'admin',
+                        type: 'notification',
                         message,
                     },
                 );
@@ -177,7 +176,7 @@ export class DiscordEventConverter extends IService {
                     || previousState === ServerState.STARTED
                 )
             ) {
-                const message = 'Có gì đó không ổn rồi man <@208994915919724544>. Đang khởi động lại server...';
+                const message = `Có gì đó không ổn rồi man <@${this.manager.config.discordAdminID}>. Đang thử khởi động lại server...`;
                 this?.log?.log(LogLevel.WARN, message);
                 this.eventBus.emit(
                     InternalEventTypes.DISCORD_MESSAGE,

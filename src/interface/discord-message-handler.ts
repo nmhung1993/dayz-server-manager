@@ -6,12 +6,14 @@ import { IService } from '../types/service';
 import { LoggerFactory } from '../services/loggerfactory';
 import { injectable, singleton } from 'tsyringe';
 import { Interface } from './interface';
+import { measureMemory } from 'vm';
 
 @singleton()
 @injectable()
 export class DiscordMessageHandler extends IService {
 
-    public readonly PREFIX = '!dz.';
+    // public readonly PREFIX = `${this.manager.config.discordCmdPrefix}`;
+    public readonly PREFIX = `${'!dz.'}`;
 
     public constructor(
         loggerFactory: LoggerFactory,
@@ -31,7 +33,7 @@ export class DiscordMessageHandler extends IService {
 
     public async handleCommandMessage(message: Message): Promise<void> {
         if (!this.manager.initDone) {
-            this.log.log(LogLevel.DEBUG, `Server chưa khởi tạo xong, không thể gọi lệnh!`);
+            this.log.log(LogLevel.INFO, `Server chưa khởi tạo xong, không thể gọi lệnh!`);
             return;
         }
 
@@ -43,19 +45,24 @@ export class DiscordMessageHandler extends IService {
         }
 
         const channelName = (message.channel as GuildChannel).name;
-        const authorId = message.author.tag;
+        const authorId = message.author.tag;        
 
-        if (!authorId?.includes('#')) {
-            // safety
-            this.log.log(LogLevel.DEBUG, `Bạn không có quyền gọi lệnh này!`);
+        
+        if (!this.manager.isUserOfLevel(authorId, "admin") 
+            || !this.manager.isUserOfLevel(authorId, "moderate") 
+            || !this.manager.isUserOfLevel(authorId, "manage")) {
+            const response = `Bạn không có quyền gọi lệnh này! ${message.author.username}#${authorId}`
+            this.log.log(LogLevel.INFO, response);
+            await message.reply(response);
             return;
         }
 
         const argsMessage = args?.join(' ');
         this.log.log(LogLevel.INFO, `Command "${command}" from "${authorId}" in "${channelName}" with args: "${argsMessage}"`);
 
-        const configChannel = this.manager.config.discordChannels.find((x) => x.channel.toLowerCase() === channelName?.toLowerCase());
-        if (command === 'help' && (configChannel.mode === 'admin')) {
+        
+        // const configChannel = this.manager.config.discordChannels.find((x) => x.channel.toLowerCase() === channelName?.toLowerCase());
+        if (command === 'help') {
             let response = 'List lệnh cho discord admin: \n\n';
             response += [...this.eventInterface.commandMap.entries()]
                 .filter((x) => !x[1].disableDiscord)
@@ -72,10 +79,10 @@ export class DiscordMessageHandler extends IService {
             return;
         }
 
-        if (configChannel?.mode !== 'admin' && !handler.discordPublic) {
-            await message.reply('Dùng cho đúng chanel bạn êi!');
-            return;
-        }
+        // if (message.channelId !== this.manager.config.channelAdmin && !handler.discordPublic) {
+        //     await message.reply('Dùng cho đúng chanel bạn êi!');
+        //     return;
+        // }
 
         const req = new Request();
         req.accept = 'text/plain';
