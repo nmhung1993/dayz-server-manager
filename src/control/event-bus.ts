@@ -10,7 +10,7 @@ import { LogEntryEvent } from '../types/log-reader';
 import { MetricEntryEvent } from '../types/metrics';
 import { DiscordMessage } from '../types/discord';
 import { GameUpdatedStatus, ModUpdatedStatus } from '../types/steamcmd';
-import { Console } from 'console';
+import { LogLevel } from '../util/logger';
 
 @singleton()
 @injectable()
@@ -41,6 +41,27 @@ export class EventBus extends IService {
     ): void;
     public emit(name: InternalEventTypes, data?: any): void {
         try{
+            if(name === InternalEventTypes.DISCORD_MESSAGE 
+                || name === InternalEventTypes.MONITOR_STATE_CHANGE 
+                || name === InternalEventTypes.MOD_UPDATED 
+                || name === InternalEventTypes.GAME_UPDATED){
+                (data: DiscordMessage) => {
+                    const dataLog = data;
+                    this?.log?.log(LogLevel.IMPORTANT, `[emit] name:${name} // DiscordMessage.type: ${dataLog.type} // DiscordMessage.msg: ${dataLog.message} // DiscordMessage.embeds: ${dataLog.embeds}`);
+                }
+                (data: ServerState) => {
+                    const dataLog = data;
+                    this?.log?.log(LogLevel.IMPORTANT, `[emit] name:${name} // ServerState: ${dataLog}`);
+                }
+                (data: ModUpdatedStatus) => {
+                    const dataLog = data;
+                    this?.log?.log(LogLevel.IMPORTANT, `[emit] name:${name} // ModUpdatedStatus.ID: ${dataLog.modIds} // ModUpdatedStatus.success: ${dataLog.success}`);
+                }
+                (data: GameUpdatedStatus) => {
+                    const dataLog = data;
+                    this?.log?.log(LogLevel.IMPORTANT, `[emit] name:${name} // GameUpdatedStatus.success: ${dataLog.success}`);
+                }
+            }
             this.EVENT_EMITTER.emit(name, data);
         }catch(e){
             console.log(`[event-bus] emit() ERORR: ${e}`);
