@@ -384,7 +384,7 @@ export class Event {
      * @required
      */
     public cron!: string;
-
+    public time?: number;
     /**
      * optional params, e.g. the message
      */

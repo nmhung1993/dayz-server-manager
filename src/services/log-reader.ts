@@ -108,53 +108,66 @@ export class LogReader extends IStatefulService {
         }
     }
 
+    private async checkLogContainer(logContainer: LogContainer) : Promise<void>  {
+        logContainer.logFiles.forEach(
+            (logFile) => {
+                this.log.log(LogLevel.WARN, `logFile PATH: ${logFile.file} exist = ${this.fs.existsSync(logFile.file)}`)
+                if(!this.fs.existsSync(logFile.file)){
+                    this.fs.writeFileSync(logFile.file, '');
+                }
+            }                
+        );
+    }
+
     private async registerReaders(): Promise<void> {
         await this.findLatestFiles();
 
         const createTail = (type: string, logContainer: LogContainer, retry?: number): void => {
             logContainer.logLines = [];
-            if (logContainer.logFiles?.length) {
-                logContainer.tail = new tail.Tail(
-                    logContainer.logFiles[0].file,
-                    {
-                        follow: true,
-                        fromBeginning: true,
-                        flushAtEOF: true,
-                    },
-                );
-                logContainer.tail.on('error', /* istanbul ignore next */ (e) => {
-                    this.log.log(LogLevel.WARN, `Error reading ${type}`, e);
-                    logContainer.tail.unwatch();
-                    if (!retry || retry < 1) {
-                        setTimeout(
-                            () => {
-                                try {
-                                    createTail(type, logContainer, (retry ?? 0) + 1);
-                                } catch (createTailError) {
-                                    this.log.log(LogLevel.WARN, `Error creating file reader ${type}`, createTailError);
-                                }
-                            },
-                            10000,
-                        );
-                    }
-                });
-                logContainer.tail.on('line', (line) => {
-                    if (line) {
-                        this.log.log(LogLevel.DEBUG, `${type} - ${line}`);
-                        const logEntry = {
-                            timestamp: new Date().valueOf(),
-                            message: line,
-                        };
-                        logContainer.logLines.push(logEntry);
-                        this.eventBus.emit(
-                            InternalEventTypes.LOG_ENTRY,
-                            {
-                                type: type as LogTypeEnum,
-                                entry: logEntry,
-                            },
-                        );
-                    }
-                });
+            if (logContainer?.logFiles?.length) {
+                if(this.fs.existsSync(logContainer.logFiles[0].file)) {
+                    logContainer.tail = new tail.Tail(
+                        logContainer?.logFiles[0]?.file,
+                        {
+                            follow: true,
+                            fromBeginning: true,
+                            flushAtEOF: true,
+                        },
+                    );
+                    logContainer?.tail?.on('error', /* istanbul ignore next */ (e) => {
+                        this.log.log(LogLevel.WARN, `Error reading ${type} - ${logContainer?.logFiles[0]?.file} - exist = ${this.fs.existsSync(logContainer.logFiles[0].file)}`);//, e);
+                        logContainer.tail.unwatch();
+                        if (!retry || retry < 1) {
+                            setTimeout(
+                                () => {
+                                    try {
+                                        createTail(type, logContainer, (retry ?? 0) + 1);
+                                    } catch (createTailError) {
+                                        this.log.log(LogLevel.WARN, `Error creating file reader ${type} - ${logContainer?.logFiles[0]?.file} - exist = ${this.fs.existsSync(logContainer.logFiles[0].file)}`);//, createTailError);
+                                    }
+                                },
+                                10000,
+                            );
+                        }
+                    });
+                    logContainer?.tail?.on('line', (line) => {
+                        if (line) {
+                            this.log.log(LogLevel.DEBUG, `${type} - ${line}`);
+                            const logEntry = {
+                                timestamp: new Date().valueOf(),
+                                message: line,
+                            };
+                            logContainer?.logLines?.push(logEntry);
+                            this.eventBus.emit(
+                                InternalEventTypes.LOG_ENTRY,
+                                {
+                                    type: type as LogTypeEnum,
+                                    entry: logEntry,
+                                },
+                            );
+                        }
+                    });
+                }
             }
         };
 

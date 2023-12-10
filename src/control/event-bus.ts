@@ -1,7 +1,7 @@
 import { injectable, singleton } from 'tsyringe';
 import { IService } from '../types/service';
 import { LoggerFactory } from '../services/loggerfactory';
-
+import { MessageEmbed } from "discord.js";
 import { EventEmitter2, Listener } from 'eventemitter2';
 import { InternalEventTypes } from '../types/events';
 import { CommandMap, Request, Response } from '../types/interface';
@@ -29,6 +29,7 @@ export class EventBus extends IService {
     }
 
     public emit(name: InternalEventTypes.DISCORD_MESSAGE, message: DiscordMessage): void;
+    public emit(name: InternalEventTypes.DISCORD_MESSAGE, embeds: MessageEmbed): void;
     public emit(name: InternalEventTypes.MONITOR_STATE_CHANGE, newState: ServerState, previousState: ServerState): void;
     public emit(name: InternalEventTypes.METRIC_ENTRY, metricEntryEvent: MetricEntryEvent): void;
     public emit(name: InternalEventTypes.LOG_ENTRY, logEntryEvent: LogEntryEvent): void;

@@ -53,6 +53,8 @@ export class DiscordMessageHandler extends IService {
             || !this.manager.isUserOfLevel(authorId, "manage")) {
             const response = `Bạn không có quyền gọi lệnh này! ${message.author.username}#${authorId}`
             this.log.log(LogLevel.INFO, response);
+            //await message.react("👍");:d_bepeOK:
+            await message.react("<:d_bepeOK:>");
             await message.reply(response);
             return;
         }
@@ -60,8 +62,6 @@ export class DiscordMessageHandler extends IService {
         const argsMessage = args?.join(' ');
         this.log.log(LogLevel.INFO, `Command "${command}" from "${authorId}" in "${channelName}" with args: "${argsMessage}"`);
 
-        
-        // const configChannel = this.manager.config.discordChannels.find((x) => x.channel.toLowerCase() === channelName?.toLowerCase());
         if (command === 'help') {
             let response = 'List lệnh cho discord admin: \n\n';
             response += [...this.eventInterface.commandMap.entries()]
@@ -78,11 +78,6 @@ export class DiscordMessageHandler extends IService {
             await message.reply('Sai cú pháp.');
             return;
         }
-
-        // if (message.channelId !== this.manager.config.channelAdmin && !handler.discordPublic) {
-        //     await message.reply('Dùng cho đúng chanel bạn êi!');
-        //     return;
-        // }
 
         const req = new Request();
         req.accept = 'text/plain';
@@ -112,14 +107,12 @@ export class DiscordMessageHandler extends IService {
 
         const res = await this.eventInterface.execute(
             req,
-            /* istanbul ignore next */ (part) => message.reply(`\n${part.body}`),
+            (part) => message.reply(`\n${part.body}`),
         );
 
         if (res.status >= 200 && res.status < 300) {
-            // eslint-disable-next-line @typescript-eslint/no-base-to-string
             await message.reply(`\n${res.body}`);
         } else {
-            // eslint-disable-next-line @typescript-eslint/no-base-to-string
             await message.reply(`\nError: ${res.body}`);
         }
     }

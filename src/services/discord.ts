@@ -2,6 +2,7 @@ import {
     TextChannel,
     Client,
     Message,
+    MessageEmbed,
     Intents   
 } from 'discord.js';
 import { DiscordMessageHandler } from '../interface/discord-message-handler';
@@ -52,14 +53,12 @@ export class DiscordBot extends IStatefulService {
                 Intents.FLAGS.GUILD_MESSAGES 
             ]
         });
-        client.login("MTE3NDMwMjg5ODc4NDU3OTU4NA.GcHeOK.ZeIG4tp5F9os4SxENElEPNBbL67FBlWmf4-6NY");
         client.on('ready', () => this.onReady());
         if (this.debug) {
             client.on('invalidated', () => this.log.log(LogLevel.ERROR, 'invalidated'));
             client.on('debug', (m) => this.log.log(LogLevel.DEBUG, m));
             client.on('warn', (m) => this.log.log(LogLevel.WARN, m));
         }
-        //client.on('message', (m) => this.onMessage(m));
         client.on('messageCreate', (m) => {
             if (m.content.toLowerCase() == 'ping') {
                 m.reply('pong');
@@ -74,13 +73,6 @@ export class DiscordBot extends IStatefulService {
             }
         });
         client.on('error', (e) => this.log.log(LogLevel.ERROR, 'error', e));
-        // client.on('interactionCreate', async interaction => {
-        //     if (!interaction.isCommand()) return;
-          
-        //     if (interaction.commandName === 'ping') {
-        //       await interaction.reply('Pong!');
-        //     }
-        //   });
 
         try {
             this.log.log(LogLevel.IMPORTANT, `Starting login discord bot with token: ${this.manager.config.discordBotToken}`);
@@ -148,8 +140,19 @@ export class DiscordBot extends IStatefulService {
         }else if(message.type.toString() === 'rcon'){
             TargetChannel = this.client.channels.cache.get(`${this.manager.config.channelRCON}`) as TextChannel;
         }
-        TargetChannel?.send(`${message.message}`);
-        
+
+
+        if(message.embed != undefined) {
+            this.log.log(LogLevel.IMPORTANT, `embed : ${JSON.stringify(message.embed)}`);
+            TargetChannel?.send({embed:message.embed})
+        } else if(message.embeds != undefined) {
+            this.log.log(LogLevel.IMPORTANT, `embeds : ${JSON.stringify(message.embeds)}`);
+            TargetChannel?.send({embeds:message.embeds})
+        } else if(message.message != '' && message.message != undefined){
+            this.log.log(LogLevel.IMPORTANT, `message : ${message.message}`);
+            TargetChannel?.send(`${message.message}`);
+            //TargetChannel?.send({content: message.message});
+        }
     }
 
 }

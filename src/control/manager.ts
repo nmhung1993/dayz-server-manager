@@ -7,6 +7,7 @@ import { LoggerFactory } from '../services/loggerfactory';
 import { inject, injectable, singleton } from 'tsyringe';
 import { FSAPI, InjectionTokens } from '../util/apis';
 import { ConfigParser } from '../util/config-parser';
+import { ServerState } from '../types/monitor';
 
 @singleton()
 @injectable()
@@ -18,6 +19,9 @@ export class Manager {
 
     private config$!: Config;
     public initDone: boolean = false;
+    public curServerState: ServerState = ServerState.STOPPED;
+
+    public processCreatedDate = new Date();
 
     public constructor(
         loggerFactory: LoggerFactory,

@@ -10,16 +10,19 @@ import { Monitor } from './monitor';
 import { Backups } from './backups';
 import { EventBus } from '../control/event-bus';
 import { InternalEventTypes } from '../types/events';
+import { ServerDetector } from './server-detector';
+
 
 @singleton()
 @injectable()
 export class Events extends IStatefulService {
 
-    private tasks: cron.Job[] = [];
+    public tasks: cron.Job[] = [];
 
     public constructor(
         logerFactory: LoggerFactory,
         private manager: Manager,
+        private serverDetector: ServerDetector,
         private monitor: Monitor,
         private rcon: RCON,
         private backup: Backups,
@@ -29,6 +32,9 @@ export class Events extends IStatefulService {
     }
 
     public async start(): Promise<void> {
+
+        await this.serverDetector.isServerRunning
+
         for (const event of (this.manager.config.events ?? [])) {
 
             const runTask = async (task: () => Promise<any>): Promise<any> => {
@@ -43,16 +49,19 @@ export class Events extends IStatefulService {
 
             const checkAndRun = async (task: () => Promise<any>): Promise<void> => {
                 if (this.monitor.serverState !== ServerState.STARTED) {
-                    this.log.log(LogLevel.WARN, `Skipping '${event.name}' because server is not in STARTED state`);
+                    this.log.log(LogLevel.WARN, `Skipping '${event.name}' because server is not in STARTED state. Current state: ${this.monitor.serverState}`);
                     return;
                 }
 
                 void runTask(task);
             };
 
+            const executeTime = new Date(this.manager.processCreatedDate.getTime() + event.time*1000*60);
+            //this.log.log(LogLevel.INFO, `eventTime = '${event.time}'. executeTime = ${executeTime}`);
+
             const job = cron.scheduleJob(
                 event.name,
-                event.cron,
+                event.time > 0 ? executeTime : event.cron,
                 () => {
                     this.log.log(LogLevel.DEBUG, `Executing task '${event.name}' (${event.type})`);
                     switch (event.type) {
@@ -98,9 +107,12 @@ export class Events extends IStatefulService {
 
             this.log.log(
                 LogLevel.INFO,
-                `Scheduled '${event.name}' with pattern: ${event.cron} (Next run: ${job.nextInvocation().toISOString()})`,
+                `Scheduled '${event.name}' with pattern: ${event.cron} (Next run: ${job.nextInvocation().toLocaleString('VN', { timeZone: 'Asia/ho_chi_minh' })})`,
             );
 
+
+            // tạm tắt push job
+            
             this.tasks.push(job);
         }
     }

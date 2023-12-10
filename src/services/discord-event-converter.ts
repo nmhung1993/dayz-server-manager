@@ -12,6 +12,7 @@ import { MessageEmbed } from "discord.js";
 import { GameUpdatedStatus, ModUpdatedStatus } from "../types/steamcmd";
 import { ServerState } from "../types/monitor";
 import { LogLevel } from "../util/logger";
+import { DiscordBot } from "./discord";
 
 @singleton()
 @injectable()
@@ -24,7 +25,7 @@ export class DiscordEventConverter extends IService {
         private steamMetaData: SteamMetaData,
         private eventBus: EventBus,
     ) {
-        super(loggerFactory.createLogger('DiscordEvent'));
+        super(loggerFactory.createLogger('DiscordHandler'));
 
         this.eventBus.on(
             InternalEventTypes.MOD_UPDATED,
@@ -69,7 +70,7 @@ export class DiscordEventConverter extends IService {
 
     public async handleModUpdated(status: ModUpdatedStatus): Promise<void> {
         try{
-           this?.log?.log(LogLevel.INFO, `handleModUpdated() - status: ${status}`);
+            this?.log?.log(LogLevel.INFO, `[handleModUpdated] - status: ${JSON.stringify(status)}`);
             if (!status.success) {
                 this.eventBus.emit(
                     InternalEventTypes.DISCORD_MESSAGE,
@@ -82,66 +83,78 @@ export class DiscordEventConverter extends IService {
             }
 
             const modInfos = await this.steamMetaData.getModsMetaData(status.modIds);
-            this.eventBus.emit(
-                InternalEventTypes.DISCORD_MESSAGE,
-                {
-                    type: 'notification',
-                    message: '',
-                    embeds: status.modIds
-                        .map((modId) => {
-                            return modInfos.find((modInfo) => modInfo?.publishedfileid === modId) || modId;
-                        })
-                        .map((modInfo) => {
-                            const fields = [];
-                            if (typeof modInfo !== 'string' && modInfo?.title) {
-                                if (modInfo.time_updated || modInfo.time_created) {
-                                    fields.push({
-                                        name: 'Uploaded at',
-                                        value: (new Date((modInfo.time_updated || modInfo.time_created) * 1000))
-                                            .toISOString()
-                                            .split(/[T\.]/)
-                                            .slice(0, 2)
-                                            .join(' ')
-                                            + ' UTC',
-                                        inline: true,
-                                    });
-                                }
-                                const embed = new MessageEmbed({
-                                    color: 0x0099FF,
-                                    title: `Update mod: ${modInfo.title}`,
-                                    url: `https://steamcommunity.com/sharedfiles/filedetails/?id=${modInfo.publishedfileid}`,
-                                    fields,
-                                    thumbnail: { url: modInfo.preview_url || undefined },
-                                    image: { url: modInfo.preview_url || undefined },
-                                    footer: {
-                                        text: 'Chiến thôi bạn êi!',
-                                    },
-                                });
-                                return embed;
-                            } else if (typeof modInfo === 'string') {
-                                return new MessageEmbed({
-                                    color: 0x0099FF,
-                                    title: `Update mod: ${modInfo}`,
-                                    url: `https://steamcommunity.com/sharedfiles/filedetails/?id=${modInfo}`,
-                                    footer: {
-                                        text: 'Chiến thôi bạn êi!',
-                                    },
-                                });
-                            }
-                            return null;
-                        })
-                        .filter((x) => !!x),
-                },
-            );
+
+            // modInfos.forEach(function (modDetail) {
+            //     console.log(`[handleModUpdated] - modInfo: ${modDetail !== undefined ? JSON.stringify(modDetail) : "undefined"}`);
+            //     //this.log.log(LogLevel.INFO, `[handleModUpdated] - modInfo: ${modDetail == undefined ? JSON.stringify(modDetail) : "undefined"}`);
+            // });
+            new Date().toLocaleString('VN', { timeZone: 'Asia/ho_chi_minh' });
+            const embeds = status.modIds
+                .map((modId) => {
+                    return modInfos.find((modInfo) => modInfo?.publishedfileid === modId) || modId;
+                })
+                .map((modInfo) => {
+                    const fields = [];
+                    if (typeof modInfo !== 'string' && modInfo?.title) {
+                        if (modInfo.time_updated || modInfo.time_created) {
+                            fields.push({
+                                name: 'Uploaded at',
+                                value: (new Date((modInfo.time_updated || modInfo.time_created) * 1000))
+                                    .toLocaleString('VN', { timeZone: 'Asia/ho_chi_minh' })
+                                    .split(/[T\.]/)
+                                    .slice(0, 2)
+                                    .join(' ')
+                                    + ' GMT+7',
+                                inline: true,
+                            });
+                        }
+                        const embed = new MessageEmbed({
+                            color: 0x0099FF,
+                            title: `Mod updated: ${modInfo.title}`,
+                            url: `https://steamcommunity.com/sharedfiles/filedetails/?id=${modInfo.publishedfileid}`,
+                            fields,
+                            thumbnail: { url: modInfo.preview_url || undefined },
+                            image: { url: modInfo.preview_url || undefined },
+                            footer: {
+                                text: '',
+                            },
+                        });
+                        return embed;
+                    } else if (typeof modInfo === 'string') {
+                        return new MessageEmbed({
+                            color: 0x0099FF,
+                            title: `Mod updated: ${modInfo}`,
+                            url: `https://steamcommunity.com/sharedfiles/filedetails/?id=${modInfo}`,
+                            footer: {
+                                text: '',
+                            },
+                        });
+                    }
+                    return null;
+                })
+            .filter((x) => !!x);
+
+            for(let embed of  embeds){
+                this?.log?.log(LogLevel.INFO,`[handleModUpdated] - sending discord embed: ${embed !== undefined ? JSON.stringify(embed) : `undefined = ${embed == undefined}`}`);
+                this.eventBus.emit(
+                    InternalEventTypes.DISCORD_MESSAGE,
+                    {
+                        type: 'notification',
+                        embeds: [embed],
+                        //message: `${embed.title} \n ${embed.url}` //JSON.stringify(embeds),
+                    }
+                );
+            }
+
         }catch(e){
-            this?.log?.log(LogLevel.ERROR, `handleModUpdated() - Something wrong ${e}`);
+            this?.log?.log(LogLevel.ERROR, `[handleModUpdated] - Something wrong ${e}`);
         }
     }
 
 
     public async handleServerState(newState: ServerState, previousState: ServerState): Promise<void> {
         try{
-            this?.log?.log(LogLevel.INFO, `handleServerState() - newState: ${newState} // previousState: ${previousState}`);
+            this?.log?.log(LogLevel.INFO, `[handleServerState] - newState: ${newState} // previousState: ${previousState}`);
             // msg about server startup
             if ((newState === ServerState.STARTED)&&(previousState === ServerState.STARTING)) {
                 const message = `Server đã khởi động! <@&${this.manager.config.discordRoleID}>`;
@@ -187,7 +200,7 @@ export class DiscordEventConverter extends IService {
                 );
             }
         }catch(e){
-            this?.log?.log(LogLevel.ERROR, `handleServerState() - Something wrong ${e}`);
+            this?.log?.log(LogLevel.ERROR, `[handleServerState] - Something wrong ${e}`);
         }
     }
 }

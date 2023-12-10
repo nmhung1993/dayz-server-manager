@@ -6,6 +6,7 @@ export interface DiscordMessage {
     message?: string,
     channelID?: string,
     embeds?: MessageEmbed[],
+    embed?: MessageEmbed,
 }
 
 export const isDiscordChannelType = (test: DiscordChannelType | DiscordChannelType[], wanted: DiscordChannelType): boolean => {

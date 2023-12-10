@@ -60,6 +60,14 @@ export class ServerDetector extends IService {
 
     public async isServerRunning(): Promise<boolean> {
         const processes = await this.getDayZProcesses();
+
+        if(processes.length>0){
+            const dateCreated = new Date(processes[0]?.CreationDate);
+            const currentDate = new Date();
+            this.manager.processCreatedDate = new Date(processes[0]?.CreationDate);
+            //this.log.log(LogLevel.IMPORTANT,`ProcessName: ${processes[0]?.Name} // runningMilisec: ${Math.abs(currentDate.getTime() - dateCreated.getTime())/1000} `);
+            //this.log.log(LogLevel.IMPORTANT,`nextEvent: ${new Date(Math.abs(dateCreated.getTime() + 1000*60*60)).toLocaleString('VN', { timeZone: 'Asia/ho_chi_minh' })} `);
+        }
         return processes.length > 0;
     }
 

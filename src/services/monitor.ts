@@ -26,7 +26,7 @@ export class Monitor extends IStatefulService {
     private modUpdateCheckerRunning = false;
     private lastModUpdateChecker = 0;
 
-    public isNewModUpdated = false;
+    public isModUpdatedMsgSent = false;
     public restartLock: boolean = false;
     private initialStart: boolean = true;
 
@@ -36,7 +36,7 @@ export class Monitor extends IStatefulService {
     // saved for determining server stuck state
     private lastServerUsages: number[] = [];
 
-    private $internalServerState: ServerState = ServerState.STOPPED;
+    public $internalServerState: ServerState = ServerState.STOPPED;
 
     public constructor(
         loggerFactory: LoggerFactory,
@@ -52,11 +52,11 @@ export class Monitor extends IStatefulService {
         super(loggerFactory.createLogger('Monitor'));
     }
 
-    private get internalServerState(): ServerState {
+    public get internalServerState(): ServerState {
         return this.$internalServerState;
     }
 
-    private set internalServerState(state: ServerState) {
+    public set internalServerState(state: ServerState) {
         if (this.$internalServerState === state) return;
 
         // prevent intermediate state change
@@ -72,6 +72,7 @@ export class Monitor extends IStatefulService {
 
         const previousState = this.$internalServerState;
         this.$internalServerState = state;
+        this.manager.curServerState = state;
         this.eventBus.emit(
             InternalEventTypes.MONITOR_STATE_CHANGE,
             this.$internalServerState,
@@ -89,6 +90,7 @@ export class Monitor extends IStatefulService {
     public async killServer(force?: boolean): Promise<boolean> {
         if (this.internalServerState === ServerState.STARTING || this.serverState === ServerState.STARTED) {
             this.internalServerState = ServerState.STOPPING;
+            this.manager.curServerState = ServerState.STOPPING;
         }
 
         return this.serverStarter.killServer(force);
@@ -215,14 +217,20 @@ export class Monitor extends IStatefulService {
                 needsRestart = false;
             }
 
+            //this.log.log(LogLevel.INFO, 'Start server check...');
             // server running
             if (await this.serverDetector.isServerRunning()) {
                 needsRestart = false;
                 this.initialStart = false;
-                this.log.log(LogLevel.INFO, 'Server running...');
                 this.internalServerState = ServerState.STARTED;
+                this.manager.curServerState = ServerState.STARTED;
             } else {
                 this.internalServerState = ServerState.STOPPED;
+                this.manager.curServerState = ServerState.STOPPED;
+
+            }
+            if(this.serverState !== this.internalServerState) {
+                this.log.log(LogLevel.IMPORTANT, 'Server state has changed: '+this.internalServerState);
             }
 
             if (needsRestart) {
@@ -234,8 +242,15 @@ export class Monitor extends IStatefulService {
                     modIds: this.steamCmd.listModUpdatedID, 
                     success: this.steamCmd.isNewModUpdated
                 };
-                this.discordEventConverter.handleModUpdated(modUpdateStatus);
-                this.restartServer();
+
+                if(!this.isModUpdatedMsgSent){
+                    this.discordEventConverter.handleModUpdated(modUpdateStatus);
+                    this.isModUpdatedMsgSent = true;
+                    // testing xoá sau khi test
+                    this.steamCmd.isNewModUpdated = false;
+                }
+
+                //this.restartServer();
             } else if (!this.manager.config.disableStuckCheck) {
                 await this.checkPossibleStuckState();
             } 
@@ -247,6 +262,7 @@ export class Monitor extends IStatefulService {
     public async restartServer(){
         this.log.log(LogLevel.IMPORTANT, '[Monitor.restartServer] Restarting...');
         this.internalServerState = ServerState.STARTING;
+        this.manager.curServerState = ServerState.STARTING;
         await this.serverStarter.killServer();
         await this.serverStarter.startServer(this.initialStart);
         this.lastServerUsages = [];
@@ -254,7 +270,7 @@ export class Monitor extends IStatefulService {
         this.steamCmd.isNewModUpdated = false;
 
         // give the server a minute to start up
-        this.skipLoop(60000);        
+        this.skipLoop(120000);        
     }
 
     public async checkPossibleStuckState(): Promise<boolean> {

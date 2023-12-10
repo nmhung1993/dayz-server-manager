@@ -7,6 +7,7 @@ import { IService } from '../types/service';
 import { ConfigParser } from '../util/config-parser';
 import { HookTypeEnum } from '../config/config';
 import { detectOS } from '../util/detect-os';
+import { cleanLogFiles } from '../util/file-control';
 import { delay, inject, injectable, singleton } from 'tsyringe';
 import { LoggerFactory } from './loggerfactory';
 import { RCON } from './rcon';
@@ -16,11 +17,12 @@ import { FSAPI, InjectionTokens } from '../util/apis';
 import { ServerDetector } from './server-detector';
 import { EventBus } from '../control/event-bus';
 import { InternalEventTypes } from '../types/events';
+import { ServerState } from '../types/monitor';
 
 @singleton()
 @injectable()
 export class ServerStarter extends IService {
-
+    
     public constructor(
         loggerFactory: LoggerFactory,
         private manager: Manager,
@@ -231,6 +233,13 @@ export class ServerStarter extends IService {
     public async startServer(skipPrep?: boolean): Promise<boolean> {
         await this.prepareServerStart(skipPrep);
 
+        if((this.manager.curServerState === ServerState.STARTING)) {
+            this.log.log(LogLevel.IMPORTANT, `ServerState = ${this.manager.curServerState}. START cleaning log files`);
+            await cleanLogFiles();
+        }else{
+            this.log.log(LogLevel.IMPORTANT, `ServerState = ${this.manager.curServerState}. CAN NOT cleaning log files`);
+        }
+
         await this.hooks.executeHooks(HookTypeEnum.beforeStart);
 
         const spawnCmd = this.buildServerSpawnCmd();
@@ -252,7 +261,7 @@ export class ServerStarter extends IService {
                 sub.unref();
 
                 sub.on('error', /* istanbul ignore next */ (e) => {
-                    this.log.log(LogLevel.IMPORTANT, 'Error while trying to start server', e);
+                    this.log.log(LogLevel.ERROR, 'Error while trying to start server', e);
                     res(false);
                 });
 
